@@ -7,7 +7,7 @@
     "license": "MIT",
     "dependencies": {
         "nan": "^2.7.0",
-        "prebuild": "^7.4.0"
+        "prebuild": "^12.1.0"
     },
     "devDependencies": {
         "electron-rebuild": "^1.6.0"
