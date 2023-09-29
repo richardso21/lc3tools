@@ -387,7 +387,13 @@ export default {
           if(run_function_str == "in") { lc3.StepIn(callback); }
           else if(run_function_str == "out") { lc3.StepOut(callback); }
           else if(run_function_str == "over") { lc3.StepOver(callback); }
-          else { lc3.RunUntilHalt(callback); }
+          else { 
+            if (this.$store.getters.run_until_halt) {
+              lc3.RunUntilHalt(callback); 
+            } else {
+              lc3.Run(callback);
+            }
+          }
         });
       } else {
         lc3.Pause();
