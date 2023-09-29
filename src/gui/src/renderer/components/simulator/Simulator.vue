@@ -333,7 +333,7 @@ export default {
       // Todo: try catch around this
       let selectedFiles = [path];
       if (!path) {
-        selectedFiles = remote.dialog.showOpenDialog({
+        selectedFiles = remote.dialog.showOpenDialogSync({
           properties: ["openFile", "multiSelections"],
           filters: [{name: "Objects", extensions: ["obj"]}]
         });
@@ -374,7 +374,7 @@ export default {
           if(run_function_str == "in") { lc3.StepIn(callback); }
           else if(run_function_str == "out") { lc3.StepOut(callback); }
           else if(run_function_str == "over") { lc3.StepOver(callback); }
-          else { lc3.Run(callback); }
+          else { lc3.RunUntilHalt(callback); }
         });
       } else {
         lc3.Pause();
