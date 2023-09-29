@@ -242,6 +242,17 @@
 
           </v-flex>
         </v-layout>
+        <v-snackbar v-model="loadedSnackBar" timeout="2500" top>
+          Object File Loaded!
+          <v-btn
+            color="red"
+            flat
+            variant="text"
+            @click="loadedSnackBar = false"
+          >
+            Close
+          </v-btn>
+        </v-snackbar>
       </v-container>
     </v-content>
 
@@ -299,7 +310,8 @@ export default {
           }
           return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
         }
-      }
+      },
+      loadedSnackBar: false,
     };
   },
   components: {
@@ -350,6 +362,7 @@ export default {
       lc3.LoadObjectFile(path);
       this.mem_view.start = lc3.GetRegValue("pc");
       this.updateUI();
+      this.loadedSnackBar = true;
     },
     reloadFiles() {
       this.loaded_files.forEach((path) => {
