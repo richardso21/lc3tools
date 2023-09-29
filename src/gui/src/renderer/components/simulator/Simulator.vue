@@ -242,7 +242,7 @@
 
           </v-flex>
         </v-layout>
-        <v-snackbar v-model="loadedSnackBar" timeout="2500" top>
+        <v-snackbar v-model="loadedSnackBar" :timeout="2500" top>
           Object File Loaded!
           <v-btn
             color="red"
