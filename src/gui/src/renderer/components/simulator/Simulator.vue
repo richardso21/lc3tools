@@ -363,6 +363,9 @@ export default {
       this.mem_view.start = lc3.GetRegValue("pc");
       this.updateUI();
       this.loadedSnackBar = true;
+      // clear output on file (re)load
+      this.console_str = "";
+      lc3.ClearOutput();
     },
     reloadFiles() {
       this.loaded_files.forEach((path) => {
