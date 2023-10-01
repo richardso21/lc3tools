@@ -50,6 +50,12 @@
                 </v-flex>
               </v-layout>
               <v-layout row>
+                <v-flex grow><h3>Clear Output on Object File Reload</h3></v-flex>
+                <v-flex shrink>
+                  <v-switch @change="saveSettings('clearOutOnReload')" v-model="settings.clear_out_on_reload"></v-switch>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
                 <v-flex grow><h3>Ignore privileged mode</h3></v-flex>
                 <v-flex shrink>
                   <v-switch @change="saveSettings('privilege')" v-model="settings.ignore_privilege"></v-switch>
@@ -182,7 +188,8 @@ export default {
         ignore_privilege: false,
         liberal_asm: false,
         ignore_update: false,
-        run_until_halt: false
+        run_until_halt: false,
+        clear_out_on_reload: true
       }
     };
   },
@@ -256,6 +263,7 @@ export default {
         this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
         this.$store.commit('setRunUntilHalt', this.settings.run_until_halt)
+        this.$store.commit('setClearOutOnReload', this.settings.clear_out_on_reload)
       } else if(setting === 'theme') {
         this.$store.commit('setTheme', this.settings.theme)
       } else if(setting === 'numbers') {
@@ -270,6 +278,8 @@ export default {
         this.$store.commit('setIgnoreUpdate', this.settings.ignore_update)
       } else if(setting === 'runUntilHalt') {
         this.$store.commit('setRunUntilHalt', this.settings.run_until_halt)
+      } else if(setting === 'clearOutOnReload') {
+        this.$store.commit('setClearOutOnReload', this.settings.clear_out_on_reload)
       }
     }
   },

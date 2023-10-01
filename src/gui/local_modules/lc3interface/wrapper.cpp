@@ -162,7 +162,6 @@ NAN_METHOD(LoadObjectFile)
 
     try {
         sim->loadObjFile(filename);
-        printer.clearOutputBuffer();
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }

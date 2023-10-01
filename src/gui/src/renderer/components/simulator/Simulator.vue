@@ -364,8 +364,10 @@ export default {
       this.updateUI();
       this.loadedSnackBar = true;
       // clear output on file (re)load
-      this.console_str = "";
-      lc3.ClearOutput();
+      if (this.$store.getters.clear_out_on_reload) {
+        this.console_str = "";
+        lc3.ClearOutput();
+      }
     },
     reloadFiles() {
       this.loaded_files.forEach((path) => {
