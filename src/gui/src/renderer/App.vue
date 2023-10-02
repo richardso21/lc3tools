@@ -44,6 +44,18 @@
                 </v-flex>
               </v-layout>
               <v-layout row>
+                <v-flex grow><h3>Stop execution on reaching HALT</h3></v-flex>
+                <v-flex shrink>
+                  <v-switch @change="saveSettings('runUntilHalt')" v-model="settings.run_until_halt"></v-switch>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
+                <v-flex grow><h3>Clear Output on Object File Reload</h3></v-flex>
+                <v-flex shrink>
+                  <v-switch @change="saveSettings('clearOutOnReload')" v-model="settings.clear_out_on_reload"></v-switch>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
                 <v-flex grow><h3>Ignore privileged mode</h3></v-flex>
                 <v-flex shrink>
                   <v-switch @change="saveSettings('privilege')" v-model="settings.ignore_privilege"></v-switch>
@@ -58,7 +70,7 @@
               </v-layout>
               <p class="text-red" v-if="settings.liberal_asm">May result in inconsistency with the grader.</p>
               <v-layout row>
-                <v-flex grow><h4>Issues? Email chirag.sakhuja@utexas.edu</h4></v-flex>
+                <v-flex grow><h4>Issues? Post on CS 2110 Piazza!</h4></v-flex>
               </v-layout>
             </v-container>
           </v-card>
@@ -175,7 +187,9 @@ export default {
         numbers: "unsigned",
         ignore_privilege: false,
         liberal_asm: false,
-        ignore_update: false
+        ignore_update: false,
+        run_until_halt: false,
+        clear_out_on_reload: true
       }
     };
   },
@@ -248,6 +262,8 @@ export default {
         this.$store.commit('setNumberType', this.settings.numbers)
         this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
+        this.$store.commit('setRunUntilHalt', this.settings.run_until_halt)
+        this.$store.commit('setClearOutOnReload', this.settings.clear_out_on_reload)
       } else if(setting === 'theme') {
         this.$store.commit('setTheme', this.settings.theme)
       } else if(setting === 'numbers') {
@@ -260,6 +276,10 @@ export default {
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
       } else if(setting === 'ignore-update') {
         this.$store.commit('setIgnoreUpdate', this.settings.ignore_update)
+      } else if(setting === 'runUntilHalt') {
+        this.$store.commit('setRunUntilHalt', this.settings.run_until_halt)
+      } else if(setting === 'clearOutOnReload') {
+        this.$store.commit('setClearOutOnReload', this.settings.clear_out_on_reload)
       }
     }
   },

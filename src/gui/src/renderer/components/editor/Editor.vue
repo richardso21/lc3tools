@@ -110,7 +110,7 @@ export default {
   methods: {
     newFile(content) {
       // Todo: try catch around this
-      let new_file = remote.dialog.showSaveDialog({
+      let new_file = remote.dialog.showSaveDialogSync({
         filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
       });
 
@@ -141,7 +141,7 @@ export default {
       // if not given a path, open a dialog to ask user for file
       let selected_files = [];
       if (path === undefined || typeof path !== 'string') {
-        selected_files = remote.dialog.showOpenDialog({
+        selected_files = remote.dialog.showOpenDialogSync({
           properties: ["openFile"],
           filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
         });

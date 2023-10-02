@@ -220,6 +220,32 @@ NAN_METHOD(Run)
     ));
 }
 
+NAN_METHOD(RunUntilHalt)
+{
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsFunction()) {
+        Nan::ThrowError("Must provide callback as an argument");
+        return;
+    }
+
+    hit_breakpoint = false;
+    Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        []() {
+          try {
+            sim->setRunInstLimit(0);
+            sim->runUntilHalt();
+          } catch(std::exception const & e) {
+            Nan::ThrowError(e.what());
+          }
+        },
+        new Nan::Callback(info[0].As<v8::Function>())
+    ));
+}
+
 NAN_METHOD(StepIn)
 {
     if(info.Length() != 1) {
@@ -633,6 +659,7 @@ NAN_MODULE_INIT(NanInit)
     NAN_EXPORT(target, RandomizeMachine);
 
     NAN_EXPORT(target, Run);
+    NAN_EXPORT(target, RunUntilHalt);
     NAN_EXPORT(target, StepIn);
     NAN_EXPORT(target, StepOver);
     NAN_EXPORT(target, StepOut);

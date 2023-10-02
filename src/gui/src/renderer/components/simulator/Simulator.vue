@@ -242,6 +242,17 @@
 
           </v-flex>
         </v-layout>
+        <v-snackbar v-model="loadedSnackBar" :timeout="2500" top>
+          Object File Loaded!
+          <v-btn
+            color="red"
+            flat
+            variant="text"
+            @click="loadedSnackBar = false"
+          >
+            Close
+          </v-btn>
+        </v-snackbar>
       </v-container>
     </v-content>
 
@@ -299,7 +310,8 @@ export default {
           }
           return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
         }
-      }
+      },
+      loadedSnackBar: false,
     };
   },
   components: {
@@ -333,7 +345,7 @@ export default {
       // Todo: try catch around this
       let selectedFiles = [path];
       if (!path) {
-        selectedFiles = remote.dialog.showOpenDialog({
+        selectedFiles = remote.dialog.showOpenDialogSync({
           properties: ["openFile", "multiSelections"],
           filters: [{name: "Objects", extensions: ["obj"]}]
         });
@@ -350,6 +362,12 @@ export default {
       lc3.LoadObjectFile(path);
       this.mem_view.start = lc3.GetRegValue("pc");
       this.updateUI();
+      this.loadedSnackBar = true;
+      // clear output on file (re)load
+      if (this.$store.getters.clear_out_on_reload) {
+        this.console_str = "";
+        lc3.ClearOutput();
+      }
     },
     reloadFiles() {
       this.loaded_files.forEach((path) => {
@@ -374,7 +392,13 @@ export default {
           if(run_function_str == "in") { lc3.StepIn(callback); }
           else if(run_function_str == "out") { lc3.StepOut(callback); }
           else if(run_function_str == "over") { lc3.StepOver(callback); }
-          else { lc3.Run(callback); }
+          else { 
+            if (this.$store.getters.run_until_halt) {
+              lc3.RunUntilHalt(callback); 
+            } else {
+              lc3.Run(callback);
+            }
+          }
         });
       } else {
         lc3.Pause();

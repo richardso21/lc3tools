@@ -111,9 +111,9 @@ void Simulator::executeEvents(void)
 
         if(event != nullptr) {
             if(event->time < time) {
-                logger.printf(lc3::utils::PrintType::P_WARNING, true, "%d: Skipping '%s' scheduled for %d", time,
+                logger.printf(lc3::utils::PrintType::P_NOTE, true, "%d: Skipping '%s' scheduled for %d", time,
                     event->toString(state).c_str(), event->time);
-                logger.newline(lc3::utils::PrintType::P_WARNING);
+                logger.newline(lc3::utils::PrintType::P_NOTE);
                 continue;
             }
 

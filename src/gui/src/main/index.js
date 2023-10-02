@@ -13,6 +13,8 @@ const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
 
+app.allowRendererProcessReuse = false;
+
 function createWindow () {
   /**
    * Initial window options
@@ -21,8 +23,22 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: screenSize.height,
     width: screenSize.width,
-    useContentSize: true
+    useContentSize: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true
+    }
   })
+
+  if (process.env.NODE_ENV === "development") {
+    mainWindow.webContents.on("did-frame-finish-load", () => {
+      mainWindow.webContents.once("devtools-opened", () => {
+        mainWindow.focus();
+      });
+      mainWindow.webContents.openDevTools();
+    });
+  }
 
   mainWindow.webContents.on('dom-ready', () => {
     mainWindow.maximize();

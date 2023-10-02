@@ -107,7 +107,12 @@ bool lc3::sim::run(void)
 bool lc3::sim::runUntilHalt(void)
 {
     run_type = RunType::UNTIL_HALT;
-    return runHelper();
+    bool success = runHelper();
+    if (success) {
+        // mock printing the halt message to console
+        printer.print("\n\n--- Halting the LC-3 ---\n\n");
+    }
+    return success;
 }
 
 bool lc3::sim::runUntilInputRequested(void)
