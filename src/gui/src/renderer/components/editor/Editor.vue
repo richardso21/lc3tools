@@ -193,6 +193,7 @@ export default {
       require("brace/mode/less");
       require("brace/theme/textmate");
       require("brace/theme/twilight");
+      require("brace/ext/searchbox")
       editor.setShowPrintMargin(false);
       editor.setOptions({
         fontSize: "1.25em"

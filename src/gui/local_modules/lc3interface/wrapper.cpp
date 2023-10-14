@@ -161,6 +161,7 @@ NAN_METHOD(LoadObjectFile)
     std::string filename((char const *) *str);
 
     try {
+        sim->randomizeState(); // lc3 should have random data on memory when loading object files
         sim->loadObjFile(filename);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());

@@ -369,8 +369,7 @@ export default {
       this.loadedSnackBar = true;
       // clear output on file (re)load
       if (this.$store.getters.clear_out_on_reload) {
-        this.console_str = "";
-        lc3.ClearOutput();
+        this.clearConsole();
       }
     },
     reloadFiles() {
@@ -411,10 +410,12 @@ export default {
     },
     reinitializeMachine() {
       lc3.ReinitializeMachine();
+      this.clearConsole();
       this.updateUI();
     },
     randomizeMachine() {
       lc3.RandomizeMachine();
+      this.clearConsole();
       this.updateUI();
     },
     endSimulation(jump_to_pc) {
