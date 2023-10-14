@@ -554,7 +554,7 @@ export default {
     jumpToMemViewStr() {
       if (this.jmp_to_loc_field[0] === 'x') {
         this.jmp_to_loc_field = '0' + this.jmp_to_loc_field
-      } else if (this.jmp_to_loc_field[0].slice(0,2) !== '0x') {
+      } else if (this.jmp_to_loc_field.slice(0,2) !== '0x') {
         this.jmp_to_loc_field = '0x' + this.jmp_to_loc_field
       }
       this.jumpToMemView(this.parseValueString(this.jmp_to_loc_field));
