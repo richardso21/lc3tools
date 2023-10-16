@@ -203,6 +203,9 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
+                        <i>{{ props.item.ascii }}</i>
+                      </div>
+                      <div class="data-cell">
                         <i>{{ props.item.line }}</i>
                       </div>
                     </tr>
@@ -212,7 +215,7 @@
 
               <div id="controls">
                 <div id="jump-to-location">
-                  <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr"></v-text-field>
+                  <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr" v-model="jmp_to_loc_field"></v-text-field>
                 </div>
                 <div id="jump-buttons">
                   <v-tooltip top>
@@ -312,6 +315,7 @@ export default {
         }
       },
       loadedSnackBar: false,
+      jmp_to_loc_field: ''
     };
   },
   components: {
@@ -365,8 +369,7 @@ export default {
       this.loadedSnackBar = true;
       // clear output on file (re)load
       if (this.$store.getters.clear_out_on_reload) {
-        this.console_str = "";
-        lc3.ClearOutput();
+        this.clearConsole();
       }
     },
     reloadFiles() {
@@ -407,10 +410,12 @@ export default {
     },
     reinitializeMachine() {
       lc3.ReinitializeMachine();
+      this.clearConsole();
       this.updateUI();
     },
     randomizeMachine() {
       lc3.RandomizeMachine();
+      this.clearConsole();
       this.updateUI();
     },
     endSimulation(jump_to_pc) {
@@ -486,9 +491,13 @@ export default {
       // Memory
       for(let i = 0; i < this.mem_view.data.length; i++) {
         let addr = (this.mem_view.start + i) & 0xffff;
+        let mem_val = lc3.GetMemValue(addr);
         this.mem_view.data[i].addr = addr;
-        this.mem_view.data[i].value = lc3.GetMemValue(addr);
+        this.mem_view.data[i].value = mem_val;
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
+        this.mem_view.data[i].ascii = mem_val <= 127
+            ? String.fromCharCode(mem_val) 
+            : '';
       }
 
       this.updateConsole();
@@ -543,8 +552,13 @@ export default {
       this.mem_view.start = new_start & 0xffff;
       this.updateUI();
     },
-    jumpToMemViewStr(value) {
-      this.jumpToMemView(this.parseValueString(value));
+    jumpToMemViewStr() {
+      if (this.jmp_to_loc_field[0] === 'x') {
+        this.jmp_to_loc_field = '0' + this.jmp_to_loc_field
+      } else if (this.jmp_to_loc_field.slice(0,2) !== '0x') {
+        this.jmp_to_loc_field = '0x' + this.jmp_to_loc_field
+      }
+      this.jumpToMemView(this.parseValueString(this.jmp_to_loc_field));
     },
     jumpToPrevMemView() {
       let new_start = this.mem_view.start - this.mem_view.data.length;
@@ -600,7 +614,7 @@ export default {
       }
       return dec
     },
-    parseValueString : (value) => {
+    parseValueString(value) {
       let mod_value = value;
       if(mod_value[0] == 'x') {
         mod_value = '0' + mod_value;
@@ -759,7 +773,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 2em 1fr 1fr 1fr 4fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 1fr 4fr;
   align-items: center;
 }
 
