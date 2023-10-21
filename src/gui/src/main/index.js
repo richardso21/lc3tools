@@ -7,11 +7,15 @@ import { app, BrowserWindow, ipcMain, screen, Menu } from 'electron'
 if (process.env.NODE_ENV !== 'development') {
   global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
-
-let mainWindow
-const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080`
-  : `file://${__dirname}/index.html`
+const path = require('path');
+const url = require('url');
+let mainWindow 
+const winURL = process.env.NODE_ENV === 'development' 
+? `http://localhost:9080` 
+: url.format({ 
+  pathname: path.join(__dirname, 'index.html'), 
+  protocol: 'file:', 
+  slashes: true });
 
 app.allowRendererProcessReuse = false;
 
