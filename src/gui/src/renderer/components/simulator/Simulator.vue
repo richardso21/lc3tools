@@ -154,7 +154,7 @@
                 <h3 class="view-header">Memory</h3>
                 <v-data-table class="elevation-4" hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
-                    <tr class="mem-row" v-bind:style="data_bg">
+                    <tr class="mem-row" v-bind:style="data_bg" v-bind:id="PCAt(props.item.addr) ? 'row-curr-pc': ''">
                       <div>
                         <a class="data-cell data-button" @click="toggleBreakpoint(props.item.addr)">
                           <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
@@ -553,7 +553,8 @@ export default {
       this.updateUI();
     },
     jumpToMemViewStr() {
-      if (this.jmp_to_loc_field[0] === 'x') {
+      this.jmp_to_loc_field = this.jmp_to_loc_field.toLowerCase()
+      if (this.jmp_to_loc_field[0] === 'x' || this.jmp_to_loc_field[0] === 'X') {
         this.jmp_to_loc_field = '0' + this.jmp_to_loc_field
       } else if (this.jmp_to_loc_field.slice(0,2) !== '0x') {
         this.jmp_to_loc_field = '0x' + this.jmp_to_loc_field
@@ -775,6 +776,10 @@ export default {
   display: grid;
   grid-template-columns: 2em 2em 1fr 1fr 1fr 1fr 4fr;
   align-items: center;
+}
+
+#row-curr-pc {
+  background-color: #008cff4d;
 }
 
 .data-button {

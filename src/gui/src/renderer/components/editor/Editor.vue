@@ -11,12 +11,12 @@
     >
       <v-list two-line>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="newFile('')">
+          <v-list-tile slot="activator" @click="saveFileAs()">
             <v-list-tile-action>
               <v-icon large>note_add</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>New File</span>
+          <span>Save File As</span>
         </v-tooltip>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="saveFile()">
@@ -67,6 +67,7 @@
               v-bind:theme="darkMode ? 'twilight' : 'textmate'"
               height="100%"
               width="98%"
+              ref="aceEditor"
             />
             <div id="console" class="elevation-4" v-html="console_str"></div>
           </v-flex>
@@ -108,7 +109,7 @@ export default {
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
   },
   methods: {
-    newFile(content) {
+    saveFileAs() {
       // Todo: try catch around this
       let new_file = remote.dialog.showSaveDialogSync({
         filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
@@ -116,7 +117,7 @@ export default {
 
       // Guard against user cancelling
       if (new_file) {
-        fs.writeFileSync(new_file, content);
+        fs.writeFileSync(new_file, this.editor.current_content);
         this.openFile(new_file);
       }
     },
@@ -124,7 +125,7 @@ export default {
       // Todo: try catch around this
       // If we don't have a file, create one
       if (this.$store.getters.activeFilePath === null) {
-        this.newFile(this.editor.current_content);
+        this.saveFileAs();
       } else {
         fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
         this.editor.original_content = this.editor.current_content;
@@ -194,6 +195,7 @@ export default {
       require("brace/theme/textmate");
       require("brace/theme/twilight");
       require("brace/ext/searchbox")
+      require("brace/keybinding/vim")
       editor.setShowPrintMargin(false);
       editor.setOptions({
         fontSize: "1.25em"
@@ -223,6 +225,9 @@ export default {
     },
     darkMode() {
       return this.$store.getters.theme === "dark"
+    },
+    editorBinding() {
+      return this.$store.getters.editor_binding
     }
   },
   watch: {
@@ -240,6 +245,13 @@ export default {
         this.editor.content_changed = true;
       } else {
         this.editor.content_changed = false;
+      }
+    },
+    "editorBinding": function(binding) {
+      if (binding === 'vim') {
+        this.$refs.aceEditor.editor.setKeyboardHandler("ace/keyboard/vim")
+      } else {
+        this.$refs.aceEditor.editor.setKeyboardHandler("")
       }
     }
   },

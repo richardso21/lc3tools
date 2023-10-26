@@ -44,6 +44,15 @@
                 </v-flex>
               </v-layout>
               <v-layout row>
+                <v-flex grow><h3>Editor Key Binding</h3></v-flex>
+                <v-flex shrink>
+                  <v-radio-group @change="saveSettings('editorBinding')" v-model="settings.editor_binding" row>
+                    <v-radio label="Standard" value="standard"></v-radio>
+                    <v-radio label="Vim" value="vim"></v-radio>
+                  </v-radio-group>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
                 <v-flex grow><h3>Stop execution on reaching HALT</h3></v-flex>
                 <v-flex shrink>
                   <v-switch @change="saveSettings('runUntilHalt')" v-model="settings.run_until_halt"></v-switch>
@@ -185,6 +194,7 @@ export default {
       settings: {
         theme: "light",
         numbers: "signed",
+        editor_binding: "standard",
         ignore_privilege: false,
         liberal_asm: false,
         ignore_update: false,
@@ -260,6 +270,7 @@ export default {
         lc3.SetEnableLiberalAsm(this.settings.liberal_asm)
         this.$store.commit('setTheme', this.settings.theme)
         this.$store.commit('setNumberType', this.settings.numbers)
+        this.$store.commit('setEditorBinding', this.settings.editor_binding)
         this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
         this.$store.commit('setRunUntilHalt', this.settings.run_until_halt)
@@ -268,6 +279,8 @@ export default {
         this.$store.commit('setTheme', this.settings.theme)
       } else if(setting === 'numbers') {
         this.$store.commit('setNumberType', this.settings.numbers)
+      } else if(setting === 'editorBinding') {
+        this.$store.commit('setEditorBinding', this.settings.editor_binding)
       } else if(setting === 'privilege') {
         lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
         this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)

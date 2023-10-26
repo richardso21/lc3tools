@@ -1,6 +1,7 @@
 const state = {
   theme: "light",
   number_type: "unsigned",
+  editor_binding: "standard",
   ignore_privilege: false,
   liberal_asm: false,
   ignore_update: false,
@@ -14,6 +15,9 @@ const mutations = {
   },
   setNumberType(state, setting) {
     state.number_type = setting
+  },
+  setEditorBinding(state, setting) {
+    state.editor_binding = setting
   },
   setIgnorePrivilege(state, setting) {
     state.ignore_privilege = setting
@@ -35,6 +39,7 @@ const mutations = {
 const getters = {
   theme: state => state.theme,
   number_type: state => state.number_type,
+  editor_binding: state => state.editor_binding,
   ignore_privilege: state => state.ignore_privilege,
   liberal_asm: state => state.liberal_asm,
   ignore_update: state => state.ignore_update,

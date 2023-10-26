@@ -239,6 +239,10 @@ NAN_METHOD(RunUntilHalt)
           try {
             sim->setRunInstLimit(0);
             sim->runUntilHalt();
+            // mock printing the halt message to console when HALT is encountered
+            if (sim->readMem(sim->readPC()) == 0xF025) {
+                printer.print("\n\n--- Halting the LC-3 ---\n\n");
+            }
           } catch(std::exception const & e) {
             Nan::ThrowError(e.what());
           }
