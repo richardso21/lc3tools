@@ -1,14 +1,8 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
   <v-app id="editor" v-bind:dark="darkMode">
-
     <!-- Sidebar -->
-    <v-navigation-drawer
-      fixed
-      mini-variant
-      permanent
-      app
-    >
+    <v-navigation-drawer fixed mini-variant permanent app>
       <v-list two-line>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="saveFileAs()">
@@ -23,7 +17,9 @@
             <v-list-tile-action>
               <v-badge color="orange darken-2" overlap>
                 <v-icon large>save</v-icon>
-                <span v-if="editor.content_changed" slot="badge"><strong>!</strong></span>
+                <span v-if="editor.content_changed" slot="badge"
+                  ><strong>!</strong></span
+                >
               </v-badge>
             </v-list-tile-action>
           </v-list-tile>
@@ -43,14 +39,19 @@
               <v-icon large>build</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span v-if="this.$store.getters.activeFilePath === null">Assemble or Convert</span>
-          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.asm')">Assemble</span>
-          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.bin')">Convert</span>
+          <span v-if="this.$store.getters.activeFilePath === null"
+            >Assemble or Convert</span
+          >
+          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.asm')"
+            >Assemble</span
+          >
+          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.bin')"
+            >Convert</span
+          >
           <span v-else>Build</span>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
-
 
     <!-- Main editor content -->
     <v-content>
@@ -74,7 +75,6 @@
         </v-layout>
       </v-container>
     </v-content>
-
   </v-app>
 </template>
 
@@ -96,14 +96,14 @@ export default {
       editor: {
         original_content: "",
         current_content: "",
-        content_changed: false
+        content_changed: false,
       },
       console_str: "",
-      editor_theme: "textmate"
+      editor_theme: "textmate",
     };
   },
   components: {
-    "ace-editor": require("vue2-ace-editor-electron")
+    "ace-editor": require("vue2-ace-editor-electron"),
   },
   mounted() {
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
@@ -112,7 +112,10 @@ export default {
     saveFileAs() {
       // Todo: try catch around this
       let new_file = remote.dialog.showSaveDialogSync({
-        filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
+        filters: [
+          { name: "Assembly", extensions: ["asm"] },
+          { name: "Binary", extensions: ["bin"] },
+        ],
       });
 
       // Guard against user cancelling
@@ -127,13 +130,22 @@ export default {
       if (this.$store.getters.activeFilePath === null) {
         this.saveFileAs();
       } else {
-        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
+        fs.writeFileSync(
+          this.$store.getters.activeFilePath,
+          this.editor.current_content
+        );
         this.editor.original_content = this.editor.current_content;
       }
     },
     autosaveFile() {
-      if (this.$store.getters.activeFilePath !== null && this.editor.original_content !== this.editor.current_content) {
-        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
+      if (
+        this.$store.getters.activeFilePath !== null &&
+        this.editor.original_content !== this.editor.current_content
+      ) {
+        fs.writeFileSync(
+          this.$store.getters.activeFilePath,
+          this.editor.current_content
+        );
         this.editor.original_content = this.editor.current_content;
       }
     },
@@ -141,10 +153,13 @@ export default {
       // Todo: try catch around this
       // if not given a path, open a dialog to ask user for file
       let selected_files = [];
-      if (path === undefined || typeof path !== 'string') {
+      if (path === undefined || typeof path !== "string") {
         selected_files = remote.dialog.showOpenDialogSync({
           properties: ["openFile"],
-          filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
+          filters: [
+            { name: "Assembly", extensions: ["asm"] },
+            { name: "Binary", extensions: ["bin"] },
+          ],
         });
       } else {
         selected_files = [path];
@@ -157,7 +172,7 @@ export default {
           active_file,
           "utf-8"
         );
-        this.$store.commit('setActiveFilePath', active_file);
+        this.$store.commit("setActiveFilePath", active_file);
       }
     },
     build() {
@@ -165,26 +180,28 @@ export default {
       if (this.editor.content_changed) {
         this.saveFile();
       }
-      let success = true
-      if(this.$store.getters.activeFilePath.endsWith(".bin")) {
+      let success = true;
+      if (this.$store.getters.activeFilePath.endsWith(".bin")) {
         try {
           lc3.ConvertBin(this.$store.getters.activeFilePath);
-        } catch(e) {
-          success = false
+        } catch (e) {
+          success = false;
         }
       } else {
         try {
           lc3.Assemble(this.$store.getters.activeFilePath);
-        } catch(e) {
-          success = false
+        } catch (e) {
+          success = false;
         }
       }
 
       const temp_console_string = lc3.GetAndClearOutput();
       this.console_str = "";
-      setTimeout(() => { this.console_str = temp_console_string; }, 200);
+      setTimeout(() => {
+        this.console_str = temp_console_string;
+      }, 200);
       if (success) {
-        this.$store.commit('touchActiveFileBuildTime');
+        this.$store.commit("touchActiveFileBuildTime");
       }
     },
     editorInit(editor) {
@@ -194,28 +211,28 @@ export default {
       require("brace/mode/less");
       require("brace/theme/textmate");
       require("brace/theme/twilight");
-      require("brace/ext/searchbox")
-      require("brace/keybinding/vim")
+      require("brace/ext/searchbox");
+      require("brace/keybinding/vim");
       editor.setShowPrintMargin(false);
       editor.setOptions({
-        fontSize: "1.25em"
-      })
-      editor.commands.addCommand({
-        name: 'save',
-        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-        exec: this.saveFile
+        fontSize: "1.25em",
       });
       editor.commands.addCommand({
-        name: 'build',
-        bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
-        exec: this.build
+        name: "save",
+        bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+        exec: this.saveFile,
       });
       editor.commands.addCommand({
-        name: 'open',
-        bindKey: {win: "Ctrl-O", "mac": "Cmd-O"},
-        exec: this.openFile
+        name: "build",
+        bindKey: { win: "Ctrl-Enter", mac: "Cmd-Enter" },
+        exec: this.build,
       });
-    }
+      editor.commands.addCommand({
+        name: "open",
+        bindKey: { win: "Ctrl-O", mac: "Cmd-O" },
+        exec: this.openFile,
+      });
+    },
   },
   computed: {
     getFilename() {
@@ -224,11 +241,11 @@ export default {
         : path.basename(this.$store.getters.activeFilePath);
     },
     darkMode() {
-      return this.$store.getters.theme === "dark"
+      return this.$store.getters.theme === "dark";
     },
     editorBinding() {
-      return this.$store.getters.editor_binding
-    }
+      return this.$store.getters.editor_binding;
+    },
   },
   watch: {
     "editor.current_content": function(newContent) {
@@ -247,13 +264,13 @@ export default {
         this.editor.content_changed = false;
       }
     },
-    "editorBinding": function(binding) {
-      if (binding === 'vim') {
-        this.$refs.aceEditor.editor.setKeyboardHandler("ace/keyboard/vim")
+    editorBinding: function(binding) {
+      if (binding === "vim") {
+        this.$refs.aceEditor.editor.setKeyboardHandler("ace/keyboard/vim");
       } else {
-        this.$refs.aceEditor.editor.setKeyboardHandler("")
+        this.$refs.aceEditor.editor.setKeyboardHandler("");
       }
-    }
+    },
   },
 };
 </script>
@@ -282,7 +299,7 @@ export default {
 
 #console {
   overflow: auto;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   margin: 15px 10px 5px 10px;
   padding: 10px;
   white-space: pre-wrap;

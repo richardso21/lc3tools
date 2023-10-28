@@ -1,14 +1,8 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
   <v-app id="simulator" v-bind:dark="darkMode">
-
     <!-- Sidebar -->
-    <v-navigation-drawer
-      fixed
-      mini-variant
-      permanent
-      app
-    >
+    <v-navigation-drawer fixed mini-variant permanent app>
       <v-list two-line>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="openFile()">
@@ -84,10 +78,13 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="simulator-wrapper">
             <div class="left-wrapper">
-
               <div id="regs-wrapper" ref="regView">
                 <h3 class="view-header">Registers</h3>
-                <v-data-table class="elevation-4" hide-actions :items="sim.regs">
+                <v-data-table
+                  class="elevation-4"
+                  hide-actions
+                  :items="sim.regs"
+                >
                   <template slot="headers">
                     <div class="reg-row row-header">
                       <div><strong>Registers</strong></div>
@@ -97,43 +94,65 @@
                   </template>
                   <template slot="items" slot-scope="props">
                     <tr class="reg-row" v-bind:style="data_bg">
-                      <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
+                      <div class="data-cell">
+                        <strong>{{ props.item.name.toUpperCase() }}</strong>
+                      </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
-                        <v-edit-dialog v-else
+                        <span v-if="sim.running">{{
+                          toHex(props.item.value)
+                        }}</span>
+                        <v-edit-dialog
+                          v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
                           {{ toHex(props.item.value) }}
                           <v-text-field
-                            slot="input" label="Hex Value"
-                            v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'reg', [rules.hex, rules.size16bit])"
+                            slot="input"
+                            label="Hex Value"
+                            v-bind:value="toHex(props.item.value)"
+                            @change="
+                              setDataValue($event, props.item, 'reg', [
+                                rules.hex,
+                                rules.size16bit,
+                              ])
+                            "
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
-                        <v-edit-dialog v-else
+                        <span v-if="sim.running">{{
+                          toDec(props.item.value)
+                        }}</span>
+                        <v-edit-dialog
+                          v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
                           {{ toDec(props.item.value) }}
                           <v-text-field
-                            slot="input" label="Decimal Value"
+                            slot="input"
+                            label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
-                            @change="setDataValue($event, props.item, 'reg', [rules.dec, rules.size16bit])"
+                            @change="
+                              setDataValue($event, props.item, 'reg', [
+                                rules.dec,
+                                rules.size16bit,
+                              ])
+                            "
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
-                        <span v-if="props.item.name == 'psr'">CC: {{ PSRToCC(props.item.value) }}</span>
+                        <span v-if="props.item.name == 'psr'"
+                          >CC: {{ PSRToCC(props.item.value) }}</span
+                        >
                         <span v-else></span>
                       </div>
                     </tr>
@@ -143,23 +162,36 @@
 
               <div id="console-wrapper">
                 <div id="console-header">
-                  <div id="console-title"><h3 class="view-header">Console (click to focus)</h3></div>
+                  <div id="console-title">
+                    <h3 class="view-header">Console (click to focus)</h3>
+                  </div>
                   <div id="console-clear">
                     <v-tooltip left>
-                        <v-icon slot="activator" @click="clearConsole()">delete_forever</v-icon>
-                        <span>Clear Console</span>
+                      <v-icon slot="activator" @click="clearConsole()"
+                        >delete_forever</v-icon
+                      >
+                      <span>Clear Console</span>
                     </v-tooltip>
                   </div>
                 </div>
-                <div ref="console" class="console" v-bind:id="darkMode ? 'console-dark' : 'console-light'" v-html="console_str" @keydown="handleConsoleInput" tabindex="0"></div>
+                <div
+                  ref="console"
+                  class="console"
+                  v-bind:id="darkMode ? 'console-dark' : 'console-light'"
+                  v-html="console_str"
+                  @keydown="handleConsoleInput"
+                  tabindex="0"
+                ></div>
               </div>
-
             </div>
             <div class="right-wrapper">
-
               <div id="memview" ref="memView">
                 <h3 class="view-header">Memory</h3>
-                <v-data-table class="elevation-4" hide-actions :items="mem_view.data">
+                <v-data-table
+                  class="elevation-4"
+                  hide-actions
+                  :items="mem_view.data"
+                >
                   <template slot="headers">
                     <div class="mem-row mem-header">
                       <div><strong>BP</strong></div>
@@ -172,49 +204,93 @@
                     </div>
                   </template>
                   <template slot="items" slot-scope="props">
-                    <tr class="mem-row" v-bind:style="data_bg" v-bind:id="PCAt(props.item.addr) ? 'row-curr-pc': ''">
+                    <tr
+                      class="mem-row"
+                      v-bind:style="data_bg"
+                      v-bind:id="PCAt(props.item.addr) ? 'row-curr-pc' : ''"
+                    >
                       <div>
-                        <a class="data-cell data-button" @click="toggleBreakpoint(props.item.addr)">
-                          <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
-                          <v-icon v-else small color="grey" class="breakpoint-icon">report</v-icon>
+                        <a
+                          class="data-cell data-button"
+                          @click="toggleBreakpoint(props.item.addr)"
+                        >
+                          <v-icon
+                            v-if="breakpointAt(props.item.addr)"
+                            color="red"
+                            >report</v-icon
+                          >
+                          <v-icon
+                            v-else
+                            small
+                            color="grey"
+                            class="breakpoint-icon"
+                            >report</v-icon
+                          >
                         </a>
                       </div>
                       <div>
-                        <a class="data-cell data-button" @click="setPC(props.item.addr)">
-                          <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
-                          <v-icon v-else small color="grey" class="pc-icon">play_arrow</v-icon>
+                        <a
+                          class="data-cell data-button"
+                          @click="setPC(props.item.addr)"
+                        >
+                          <v-icon v-if="PCAt(props.item.addr)" color="blue"
+                            >play_arrow</v-icon
+                          >
+                          <v-icon v-else small color="grey" class="pc-icon"
+                            >play_arrow</v-icon
+                          >
                         </a>
                       </div>
-                      <div class="data-cell"><strong>{{ toHex(props.item.addr) }}</strong></div>
+                      <div class="data-cell">
+                        <strong>{{ toHex(props.item.addr) }}</strong>
+                      </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
-                        <v-edit-dialog v-else
+                        <span v-if="sim.running">{{
+                          toHex(props.item.value)
+                        }}</span>
+                        <v-edit-dialog
+                          v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
                           {{ toHex(props.item.value) }}
                           <v-text-field
-                            slot="input" label="Hex Value"
-                            v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'mem', [rules.hex, rules.size16bit])"
+                            slot="input"
+                            label="Hex Value"
+                            v-bind:value="toHex(props.item.value)"
+                            @change="
+                              setDataValue($event, props.item, 'mem', [
+                                rules.hex,
+                                rules.size16bit,
+                              ])
+                            "
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
-                        <v-edit-dialog v-else
+                        <span v-if="sim.running">{{
+                          toDec(props.item.value)
+                        }}</span>
+                        <v-edit-dialog
+                          v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
                           {{ toDec(props.item.value) }}
                           <v-text-field
-                            slot="input" label="Decimal Value"
+                            slot="input"
+                            label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
-                            @change="setDataValue($event, props.item, 'mem', [rules.dec, rules.size16bit])"
+                            @change="
+                              setDataValue($event, props.item, 'mem', [
+                                rules.dec,
+                                rules.size16bit,
+                              ])
+                            "
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
@@ -233,34 +309,51 @@
 
               <div id="controls">
                 <div id="jump-to-location">
-                  <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr" v-model="jmp_to_loc_field"></v-text-field>
+                  <v-text-field
+                    single-line
+                    label="Jump To Location"
+                    @change="jumpToMemViewStr"
+                    v-model="jmp_to_loc_field"
+                  ></v-text-field>
                 </div>
                 <div id="jump-buttons">
                   <v-tooltip top>
-                    <v-btn flat @click="jumpToPC(true)" slot="activator"><span class="title">PC</span></v-btn>
+                    <v-btn flat @click="jumpToPC(true)" slot="activator"
+                      ><span class="title">PC</span></v-btn
+                    >
                     <span>Jump to PC</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToPrevMemView" slot="activator"><v-icon large>arrow_back</v-icon></v-btn>
-                    <span>{{ toHex((mem_view.start - mem_view.data.length) & 0xffff) }}</span>
+                    <v-btn icon @click="jumpToPrevMemView" slot="activator"
+                      ><v-icon large>arrow_back</v-icon></v-btn
+                    >
+                    <span>{{
+                      toHex((mem_view.start - mem_view.data.length) & 0xffff)
+                    }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToPrevPartMemView" slot="activator"><v-icon>arrow_back</v-icon></v-btn>
+                    <v-btn icon @click="jumpToPrevPartMemView" slot="activator"
+                      ><v-icon>arrow_back</v-icon></v-btn
+                    >
                     <span>{{ toHex((mem_view.start - 5) & 0xffff) }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToNextPartMemView" slot="activator"><v-icon>arrow_forward</v-icon></v-btn>
+                    <v-btn icon @click="jumpToNextPartMemView" slot="activator"
+                      ><v-icon>arrow_forward</v-icon></v-btn
+                    >
                     <span>{{ toHex((mem_view.start + 5) & 0xffff) }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToNextMemView" slot="activator"><v-icon large>arrow_forward</v-icon></v-btn>
-                    <span>{{ toHex((mem_view.start + mem_view.data.length) & 0xffff) }}</span>
+                    <v-btn icon @click="jumpToNextMemView" slot="activator"
+                      ><v-icon large>arrow_forward</v-icon></v-btn
+                    >
+                    <span>{{
+                      toHex((mem_view.start + mem_view.data.length) & 0xffff)
+                    }}</span>
                   </v-tooltip>
                 </div>
               </div>
-
             </div>
-
           </v-flex>
         </v-layout>
         <v-snackbar v-model="loadedSnackBar" :timeout="2500" top>
@@ -276,7 +369,6 @@
         </v-snackbar>
       </v-container>
     </v-content>
-
   </v-app>
 </template>
 
@@ -296,13 +388,23 @@ export default {
     return {
       sim: {
         // !! Do not change the order of these registers because regs[9] is referenced everywhere for PC !!
-        regs: [{name: "r0", value: 0},  {name: "r1", value: 0}, {name: "r2", value: 0}, {name: "r3", value: 0},
-               {name: "r4", value: 0},  {name: "r5", value: 0}, {name: "r6", value: 0}, {name: "r7", value: 0},
-               {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "mcr", value: 0}],
+        regs: [
+          { name: "r0", value: 0 },
+          { name: "r1", value: 0 },
+          { name: "r2", value: 0 },
+          { name: "r3", value: 0 },
+          { name: "r4", value: 0 },
+          { name: "r5", value: 0 },
+          { name: "r6", value: 0 },
+          { name: "r7", value: 0 },
+          { name: "psr", value: 0 },
+          { name: "pc", value: 0 },
+          { name: "mcr", value: 0 },
+        ],
         breakpoints: [],
         running: false,
       },
-      mem_view: {start: 0x3000, data: []},
+      mem_view: { start: 0x3000, data: [] },
       loaded_files: new Set(),
       console_str: "",
       prev_inst_executed: 0,
@@ -311,55 +413,63 @@ export default {
       data_writeable: false,
       rules: {
         hex: function(value) {
-          if(value[0] == 'x') {
-            value = '0' + value;
+          if (value[0] == "x") {
+            value = "0" + value;
           }
-          return (parseInt(value, 16) == value) || "Invalid hex number"
+          return parseInt(value, 16) == value || "Invalid hex number";
         },
         dec: function(value) {
-          return (parseInt(value, 10) == value) || "Invalid decimal number"
+          return parseInt(value, 10) == value || "Invalid decimal number";
         },
         size16bit: function(value) {
-          if(value[0] == 'x') {
-            value = '0' + value;
+          if (value[0] == "x") {
+            value = "0" + value;
           }
           let int_value = parseInt(value);
           if (int_value < 0) {
             // If the number is negative, convert it to an unsigned representation to be able
             // to do the following 0xffff check.
-            int_value = (1 << 15) + int_value
+            int_value = (1 << 15) + int_value;
           }
-          return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
-        }
+          return (
+            (int_value >= 0 && int_value <= 0xffff) ||
+            "Value must be between 0 and xFFFF"
+          );
+        },
       },
       loadedSnackBar: false,
-      jmp_to_loc_field: ''
+      jmp_to_loc_field: "",
     };
   },
-  components: {
-  },
-  created() {
-  },
+  components: {},
+  created() {},
   beforeMount() {
-    this.mem_view.data.push({addr: 0, value: 0, line: ""});
+    this.mem_view.data.push({ addr: 0, value: 0, line: "" });
   },
   mounted() {
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 24) - 5; i++) {
-      this.mem_view.data.push({addr: 0, value: 0, line: ""});
+    for (
+      let i = 0;
+      i < Math.floor(this.$refs.memView.clientHeight / 24) - 5;
+      i++
+    ) {
+      this.mem_view.data.push({ addr: 0, value: 0, line: "" });
     }
     this.updateUI();
     this.jumpToPC(true);
   },
   activated() {
-    let asm_file_name = this.$store.getters.activeFilePath
-    if(asm_file_name !== null &&
-      this.$store.getters.activeFileBuildTime > this.$store.getters.activeFileLoadTime)
-    {
-      let obj_file_name = asm_file_name.substr(0, asm_file_name.lastIndexOf(".")) + ".obj";
-      if(fs.existsSync(obj_file_name)) {
+    let asm_file_name = this.$store.getters.activeFilePath;
+    if (
+      asm_file_name !== null &&
+      this.$store.getters.activeFileBuildTime >
+        this.$store.getters.activeFileLoadTime
+    ) {
+      let obj_file_name =
+        asm_file_name.substr(0, asm_file_name.lastIndexOf(".")) + ".obj";
+      if (fs.existsSync(obj_file_name)) {
         this.loadFile(obj_file_name);
       }
-      this.$store.commit('touchActiveFileLoadTime')
+      this.$store.commit("touchActiveFileLoadTime");
     }
   },
   methods: {
@@ -369,7 +479,7 @@ export default {
       if (!path) {
         selectedFiles = remote.dialog.showOpenDialogSync({
           properties: ["openFile", "multiSelections"],
-          filters: [{name: "Objects", extensions: ["obj"]}]
+          filters: [{ name: "Objects", extensions: ["obj"] }],
         });
       }
 
@@ -397,25 +507,33 @@ export default {
       this.updateUI();
     },
     toggleSimulator(run_function_str) {
-      if(!this.poll_output_handle) {
-        this.poll_output_handle = setInterval(this.updateConsole, 50)
+      if (!this.poll_output_handle) {
+        this.poll_output_handle = setInterval(this.updateConsole, 50);
       }
-      if(!this.sim.running) {
+      if (!this.sim.running) {
         lc3.ClearInput();
         this.sim.running = true;
         this.data_bg.backgroundColor = "lightgrey";
         return new Promise((resolve, reject) => {
           let callback = (error) => {
-            if(error) { reject(error); return; }
-            this.endSimulation(run_function_str != "run" || lc3.DidHitBreakpoint());
+            if (error) {
+              reject(error);
+              return;
+            }
+            this.endSimulation(
+              run_function_str != "run" || lc3.DidHitBreakpoint()
+            );
             resolve();
           };
-          if(run_function_str == "in") { lc3.StepIn(callback); }
-          else if(run_function_str == "out") { lc3.StepOut(callback); }
-          else if(run_function_str == "over") { lc3.StepOver(callback); }
-          else { 
+          if (run_function_str == "in") {
+            lc3.StepIn(callback);
+          } else if (run_function_str == "out") {
+            lc3.StepOut(callback);
+          } else if (run_function_str == "over") {
+            lc3.StepOver(callback);
+          } else {
             if (this.$store.getters.run_until_halt) {
-              lc3.RunUntilHalt(callback); 
+              lc3.RunUntilHalt(callback);
             } else {
               lc3.Run(callback);
             }
@@ -444,7 +562,9 @@ export default {
       this.sim.running = false;
       this.sim.regs[9].value = lc3.GetRegValue("pc");
 
-      if(jump_to_pc) { this.jumpToPC(false); }
+      if (jump_to_pc) {
+        this.jumpToPC(false);
+      }
       this.updateUI();
       this.data_bg.backgroundColor = "";
       this.prev_inst_executed = lc3.GetInstExecCount();
@@ -458,19 +578,20 @@ export default {
     handleConsoleInput(event) {
       // Typable characters on a standard keyboard.
       const overrides = {
-        'Enter':     0x0a,
-        'Backspace': 0x08,
-        'Tab':       0x09, 
-        'Escape':    0x1b,
-        'Delete':    0x7f,
+        Enter: 0x0a,
+        Backspace: 0x08,
+        Tab: 0x09,
+        Escape: 0x1b,
+        Delete: 0x7f,
       };
       // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
-      let key = event.key, code = key.charCodeAt(0);
-      if(key in overrides) {
+      let key = event.key,
+        code = key.charCodeAt(0);
+      if (key in overrides) {
         lc3.AddInput(String.fromCharCode(overrides[key]));
-      } else if(key.length == 1) {
+      } else if (key.length == 1) {
         // Handle CTRL-a through CTRL-z.
-        if((code > 64 && code < 128 && event.ctrlKey))
+        if (code > 64 && code < 128 && event.ctrlKey)
           key = String.fromCharCode(code & 0x1f);
         lc3.AddInput(key);
       }
@@ -480,21 +601,21 @@ export default {
       this.data_writeable = value;
     },
     setDataValue(event, data_cell, type, rules) {
-      if(this.data_writeable) {
-        for(let i = 0; i < rules.length; i += 1) {
-          if(rules[i](event) != true) {
-            if(type == "reg") {
+      if (this.data_writeable) {
+        for (let i = 0; i < rules.length; i += 1) {
+          if (rules[i](event) != true) {
+            if (type == "reg") {
               data_cell.value = lc3.GetRegValue(data_cell.name);
-            } else if(type == "mem") {
+            } else if (type == "mem") {
               data_call.value = lc3.GetMemValue(data_cell.addr);
             }
             return;
           }
         }
         data_cell.value = this.parseValueString(event);
-        if(type == "reg") {
+        if (type == "reg") {
           lc3.SetRegValue(data_cell.name, data_cell.value);
-        } else if(type == "mem") {
+        } else if (type == "mem") {
           lc3.SetMemValue(data_cell.addr, data_cell.value);
         }
         this.updateUI();
@@ -502,20 +623,19 @@ export default {
     },
     updateUI() {
       // Registers
-      for(let i = 0; i < this.sim.regs.length; i++) {
+      for (let i = 0; i < this.sim.regs.length; i++) {
         this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
       }
 
       // Memory
-      for(let i = 0; i < this.mem_view.data.length; i++) {
+      for (let i = 0; i < this.mem_view.data.length; i++) {
         let addr = (this.mem_view.start + i) & 0xffff;
         let mem_val = lc3.GetMemValue(addr);
         this.mem_view.data[i].addr = addr;
         this.mem_view.data[i].value = mem_val;
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
-        this.mem_view.data[i].ascii = mem_val <= 127
-            ? String.fromCharCode(mem_val) 
-            : '';
+        this.mem_view.data[i].ascii =
+          mem_val <= 127 ? String.fromCharCode(mem_val) : "";
       }
 
       this.updateConsole();
@@ -523,28 +643,34 @@ export default {
     updateConsole() {
       // Console
       let update = lc3.GetAndClearOutput();
-      if(update.length) {
+      if (update.length) {
         // Resolve all internal backspaces first
-        while(update.match(/[^\x08\n]\x08/)) {
-          update = update.replace(/[^\x08\n]\x08/g, '');
+        while (update.match(/[^\x08\n]\x08/)) {
+          update = update.replace(/[^\x08\n]\x08/g, "");
         }
         let bs = 0; // backspace count
-        while(update.charAt(bs) === '\x08' && bs < this.console_str.length && this.console_str.substr(-(1 + bs), 1) != '\n') {
+        while (
+          update.charAt(bs) === "\x08" &&
+          bs < this.console_str.length &&
+          this.console_str.substr(-(1 + bs), 1) != "\n"
+        ) {
           bs++;
         }
-        if(bs) {
+        if (bs) {
           update = update.substring(bs);
           this.console_str = this.console_str.slice(0, -bs);
         }
         this.console_str += update;
-        setTimeout(() => this.$refs.console.scrollTop = this.$refs.console.scrollHeight);
+        setTimeout(
+          () => (this.$refs.console.scrollTop = this.$refs.console.scrollHeight)
+        );
       }
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
 
     toggleBreakpoint(addr) {
       let idx = this.sim.breakpoints.indexOf(addr);
-      if(idx == -1) {
+      if (idx == -1) {
         this.sim.breakpoints.push(addr);
         lc3.SetBreakpoint(addr);
       } else {
@@ -571,11 +697,11 @@ export default {
       this.updateUI();
     },
     jumpToMemViewStr() {
-      this.jmp_to_loc_field = this.jmp_to_loc_field.toLowerCase()
-      if (this.jmp_to_loc_field[0] === 'x') {
-        this.jmp_to_loc_field = '0' + this.jmp_to_loc_field
-      } else if (this.jmp_to_loc_field.slice(0,2) !== '0x') {
-        this.jmp_to_loc_field = '0x' + this.jmp_to_loc_field
+      this.jmp_to_loc_field = this.jmp_to_loc_field.toLowerCase();
+      if (this.jmp_to_loc_field[0] === "x") {
+        this.jmp_to_loc_field = "0" + this.jmp_to_loc_field;
+      } else if (this.jmp_to_loc_field.slice(0, 2) !== "0x") {
+        this.jmp_to_loc_field = "0x" + this.jmp_to_loc_field;
       }
       this.jumpToMemView(this.parseValueString(this.jmp_to_loc_field));
     },
@@ -596,13 +722,14 @@ export default {
       this.jumpToMemView(new_start);
     },
     jumpToPC(jump_if_in_view) {
-      let mem_view_end = (this.mem_view.start + this.mem_view.data.length) & 0xffff;
+      let mem_view_end =
+        (this.mem_view.start + this.mem_view.data.length) & 0xffff;
       let pc = this.sim.regs[9].value & 0xffff;
       let in_view = pc >= this.mem_view.start && pc < mem_view_end;
-      if(this.mem_view.start > mem_view_end) {
+      if (this.mem_view.start > mem_view_end) {
         in_view = pc >= this.mem_view.start || pc < mem_view_end;
       }
-      if(jump_if_in_view || !in_view) {
+      if (jump_if_in_view || !in_view) {
         this.jumpToMemView(pc);
       }
     },
@@ -610,11 +737,11 @@ export default {
     // Helper functions
     PSRToCC(psr) {
       let cc = psr & 0x7;
-      if(cc == 0x1) {
+      if (cc == 0x1) {
         return "P";
-      } else if(cc == 0x2) {
+      } else if (cc == 0x2) {
         return "Z";
-      } else if(cc == 0x4) {
+      } else if (cc == 0x4) {
         return "N";
       } else {
         return "Undefined";
@@ -625,29 +752,28 @@ export default {
       return "x" + "0".repeat(4 - hex.length) + hex;
     },
     toDec(value) {
-      let dec = value
-      if (this.$store.getters.number_type === 'signed') {
+      let dec = value;
+      if (this.$store.getters.number_type === "signed") {
         if ((dec & 0x8000) === 0x8000) {
-          dec = (-(1 << 15)) + (dec & 0x7FFF)
+          dec = -(1 << 15) + (dec & 0x7fff);
         }
       }
-      return dec
+      return dec;
     },
     parseValueString(value) {
       let mod_value = value;
-      if(mod_value[0] == 'x') {
-        mod_value = '0' + mod_value;
+      if (mod_value[0] == "x") {
+        mod_value = "0" + mod_value;
       }
-      return parseInt(mod_value)
-    }
+      return parseInt(mod_value);
+    },
   },
   computed: {
     darkMode() {
-      return this.$store.getters.theme === "dark"
-    }
+      return this.$store.getters.theme === "dark";
+    },
   },
-  watch: {
-  }
+  watch: {},
 };
 </script>
 
@@ -758,20 +884,21 @@ export default {
   font-family: Courier, monospace;
   padding: 8px;
   overflow-y: scroll;
-  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+    0 1px 10px 0 rgba(0, 0, 0, 0.12);
   white-space: pre-wrap;
 }
 
 .console:focus {
   outline: none;
-  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
+  box-shadow: 0px 0px 6px 3px rgba(33, 150, 223, 0.6);
 }
 
 .console::after {
-  content: '\25af';
+  content: "\25af";
 }
 .console:focus::after {
-  content: '\25ae';
+  content: "\25ae";
 }
 
 #console-light {
@@ -779,7 +906,7 @@ export default {
 }
 
 #console-dark {
-  background-color: rgba(66,66,66,1);
+  background-color: rgba(66, 66, 66, 1);
 }
 
 .right-wrapper {
@@ -847,5 +974,4 @@ export default {
   grid-row: 1;
   text-align: right;
 }
-
 </style>
