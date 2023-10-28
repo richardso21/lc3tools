@@ -87,7 +87,14 @@
 
               <div id="regs-wrapper" ref="regView">
                 <h3 class="view-header">Registers</h3>
-                <v-data-table class="elevation-4" hide-headers hide-actions :items="sim.regs">
+                <v-data-table class="elevation-4" hide-actions :items="sim.regs">
+                  <template slot="headers">
+                    <div class="reg-row row-header">
+                      <div><strong>Registers</strong></div>
+                      <div><strong>Hex</strong></div>
+                      <div><strong>Decimal</strong></div>
+                    </div>
+                  </template>
                   <template slot="items" slot-scope="props">
                     <tr class="reg-row" v-bind:style="data_bg">
                       <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
@@ -152,7 +159,18 @@
 
               <div id="memview" ref="memView">
                 <h3 class="view-header">Memory</h3>
-                <v-data-table class="elevation-4" hide-headers hide-actions :items="mem_view.data">
+                <v-data-table class="elevation-4" hide-actions :items="mem_view.data">
+                  <template slot="headers">
+                    <div class="mem-row mem-header">
+                      <div><strong>BP</strong></div>
+                      <div><strong>PC</strong></div>
+                      <div><strong>Address</strong></div>
+                      <div><strong>Hex</strong></div>
+                      <div><strong>Decimal</strong></div>
+                      <div><strong>ASCII</strong></div>
+                      <div><strong>Instructions</strong></div>
+                    </div>
+                  </template>
                   <template slot="items" slot-scope="props">
                     <tr class="mem-row" v-bind:style="data_bg" v-bind:id="PCAt(props.item.addr) ? 'row-curr-pc': ''">
                       <div>
@@ -326,7 +344,7 @@ export default {
     this.mem_view.data.push({addr: 0, value: 0, line: ""});
   },
   mounted() {
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 24) - 4; i++) {
+    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 24) - 5; i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateUI();
@@ -662,7 +680,7 @@ export default {
   grid-row: 1;
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 310px auto;
+  grid-template-rows: 350px auto;
   height: calc(100vh - 90px);
   overflow: hidden;
 }
@@ -672,7 +690,7 @@ export default {
   line-height: 24px;
   text-align: left;
   padding-left: 5px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: Courier, monospace;
   overflow: hidden;
   white-space: nowrap;
   align-self: center;
@@ -694,6 +712,13 @@ export default {
   grid-template-columns: 1fr 1fr 1fr 2fr;
   align-items: center;
   padding-left: 10px;
+}
+
+.row-header {
+  padding-top: 2.5px;
+  padding-bottom: 2.5px;
+  background-color: #00000040;
+  column-gap: 5px;
 }
 
 /* Console styles */
@@ -730,7 +755,7 @@ export default {
   order: 2;
   height: 100%;
   width: 100%;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: Courier, monospace;
   padding: 8px;
   overflow-y: scroll;
   box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
@@ -774,8 +799,15 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 2em 1fr 1fr 1fr 1fr 4fr;
+  grid-template-columns: 3em 3em 1fr 1fr 1fr 1fr 4fr;
   align-items: center;
+}
+
+.mem-header {
+  padding-left: 7.5px;
+  padding-top: 2.5px;
+  padding-bottom: 2.5px;
+  background-color: #00000040;
 }
 
 #row-curr-pc {
