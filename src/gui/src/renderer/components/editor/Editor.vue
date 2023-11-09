@@ -96,14 +96,14 @@ export default {
       editor: {
         original_content: "",
         current_content: "",
-        content_changed: false,
+        content_changed: false
       },
       console_str: "",
-      editor_theme: "textmate",
+      editor_theme: "textmate"
     };
   },
   components: {
-    "ace-editor": require("vue2-ace-editor-electron"),
+    "ace-editor": require("vue2-ace-editor-electron")
   },
   mounted() {
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
@@ -114,8 +114,8 @@ export default {
       let new_file = remote.dialog.showSaveDialogSync({
         filters: [
           { name: "Assembly", extensions: ["asm"] },
-          { name: "Binary", extensions: ["bin"] },
-        ],
+          { name: "Binary", extensions: ["bin"] }
+        ]
       });
 
       // Guard against user cancelling
@@ -158,8 +158,8 @@ export default {
           properties: ["openFile"],
           filters: [
             { name: "Assembly", extensions: ["asm"] },
-            { name: "Binary", extensions: ["bin"] },
-          ],
+            { name: "Binary", extensions: ["bin"] }
+          ]
         });
       } else {
         selected_files = [path];
@@ -216,23 +216,24 @@ export default {
       editor.setShowPrintMargin(false);
       editor.setOptions({
         fontSize: "1.25em",
+        scrollPastEnd: 0.7
       });
       editor.commands.addCommand({
         name: "save",
         bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
-        exec: this.saveFile,
+        exec: this.saveFile
       });
       editor.commands.addCommand({
         name: "build",
         bindKey: { win: "Ctrl-Enter", mac: "Cmd-Enter" },
-        exec: this.build,
+        exec: this.build
       });
       editor.commands.addCommand({
         name: "open",
         bindKey: { win: "Ctrl-O", mac: "Cmd-O" },
-        exec: this.openFile,
+        exec: this.openFile
       });
-    },
+    }
   },
   computed: {
     getFilename() {
@@ -245,7 +246,7 @@ export default {
     },
     editorBinding() {
       return this.$store.getters.editor_binding;
-    },
+    }
   },
   watch: {
     "editor.current_content": function(newContent) {
@@ -270,8 +271,8 @@ export default {
       } else {
         this.$refs.aceEditor.editor.setKeyboardHandler("");
       }
-    },
-  },
+    }
+  }
 };
 </script>
 
