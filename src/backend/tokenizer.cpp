@@ -61,21 +61,6 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
             return *this;
         }
 
-        // Ignore comments directly in tokenizer.
-        // The ; may be embedded within quotes in a .stringz, so we cannot blindly ignore after ;.
-        bool in_string = false;
-        uint64_t comment_idx = line.size();
-        for(uint64_t i = 0; i < line.size(); ++i) {
-            if(line[i] == '"') {
-                in_string = ! in_string;
-            }
-            if(line[i] == ';' && ! in_string) {
-                comment_idx = i;
-                break;
-            }
-        }
-        line = line.substr(0, comment_idx);
-
         size_t search = line.find_last_not_of(" \t");
         if(search != std::string::npos) {
             // Ignore trailing whitespace.
@@ -97,7 +82,8 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     }
 
     // If there's nothing left on this line, get a new line (but first return EOL).
-    if(col >= line.size()) {
+    // Also return EOL if comment (;) is detected instead of erasing it
+    if(col >= line.size() || line[col] == ';') {
         get_new_line = true;
         return_new_line = true;
         return operator>>(token);
