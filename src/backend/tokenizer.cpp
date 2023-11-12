@@ -91,7 +91,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     }
 
     // Ignore delimeters entirely.
-    std::string delims = ",: \t";
+    std::string delims = " \t";
     while(col < line.size() && delims.find(line[col]) != std::string::npos) {
         col += 1;
     }

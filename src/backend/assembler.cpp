@@ -27,18 +27,26 @@ lc3::core::Assembler::assemble(std::istream & buffer)
     bool success = true;
     uint32_t fail_pass = 0;
 
+    std::pair<bool, SymbolTable> symbols;
+    std::pair<bool, std::vector<MemLocation>> machine_code_blob;
+
     logger.printf(PrintType::P_EXTRA, true, "===== begin identifying tokens =====");
-    std::vector<Statement> statements = buildStatements(buffer);
+    std::pair<bool, std::vector<Statement>> statements = buildStatements(buffer);
+    success &= statements.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end identifying tokens =====");
     logger.newline(PrintType::P_EXTRA);
+    if (! success) {
+        fail_pass = 1;
+        goto success_handler; // we don't want to continue assembling the statement if commas are missing
+    }
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin marking PCs =====");
-    setStatementPCField(statements);
+    setStatementPCField(statements.second);
     logger.printf(PrintType::P_EXTRA, true, "===== end marking PCs =====");
     logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin building symbol table =====");
-    std::pair<bool, SymbolTable> symbols = buildSymbolTable(statements);
+    symbols = buildSymbolTable(statements.second);
     success &= symbols.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
     logger.newline(PrintType::P_EXTRA);
@@ -49,7 +57,7 @@ lc3::core::Assembler::assemble(std::istream & buffer)
     }
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
-    std::pair<bool, std::vector<MemLocation>> machine_code_blob = buildMachineCode(statements, symbols.second);
+    machine_code_blob = buildMachineCode(statements.second, symbols.second);
     success &= machine_code_blob.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
     logger.newline(PrintType::P_EXTRA);
@@ -57,6 +65,7 @@ lc3::core::Assembler::assemble(std::istream & buffer)
         fail_pass = 2;
     }
 
+success_handler:
     if(! success) {
         if(fail_pass == 0) {
             logger.printf(PrintType::P_ERROR, true, "assembly failed");
@@ -75,13 +84,14 @@ lc3::core::Assembler::assemble(std::istream & buffer)
     return std::make_pair(ret, symbols.second);
 }
 
-std::vector<lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatements(std::istream & buffer)
+std::pair<bool, std::vector<lc3::core::asmbl::Statement>> lc3::core::Assembler::buildStatements(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     Tokenizer tokenizer{buffer, enable_liberal_asm};
     std::vector<Statement> statements;
+    bool success = true;
 
     while(! tokenizer.isDone()) {
         std::vector<Token> tokens;
@@ -96,20 +106,26 @@ std::vector<lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatements(s
         }
 
         if(! tokenizer.isDone()) {
-            statements.push_back(buildStatement(tokens));
+            std::pair<bool, Statement> statement = buildStatement(tokens);
+            if (!statement.first) {
+                success = false;
+                break;
+            }
+            statements.push_back(statement.second);
         }
     }
 
-    return statements;
+    return std::make_pair(success, statements);
 }
 
-lc3::core::asmbl::Statement lc3::core::Assembler::buildStatement(
+std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatement(
     std::vector<lc3::core::asmbl::Token> const & tokens)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     Statement ret;
+    bool success = true;
 
     // A lot of special case logic here to identify tokens as labels, instructions, pseudo-ops, etc.
     // Note: This DOES NOT check for valid statements, it just identifies tokens with what they should be
@@ -223,7 +239,20 @@ lc3::core::asmbl::Statement lc3::core::Assembler::buildStatement(
         for(uint32_t i = operand_start_idx; i < tokens.size(); i += 1) {
             if(tokens[i].type == Token::Type::STRING) {
                 if(encoder.isStringValidReg(tokens[i].str)) {
-                    ret.operands.emplace_back(tokens[i], StatementPiece::Type::REG);
+                    Token regToken = tokens[i];
+                    if (i != tokens.size() - 1) {
+                        // any register not the last operand should still have a comma from the tokenizer
+                        if (regToken.str.back() != ',') {
+                            // signal an error if comma is not present
+                            logger.asmPrintf(PrintType::P_ERROR, ret, "bad statement format (missing/too many commas?)");
+                            success = false;
+                            break;
+                        }
+                        // remove the comma
+                        regToken.str = regToken.str.substr(0, regToken.str.size() - 1);
+                        regToken.len--;
+                    }
+                    ret.operands.emplace_back(regToken, StatementPiece::Type::REG);
                 } else {
                     ret.operands.emplace_back(tokens[i], StatementPiece::Type::STRING);
                 }
@@ -237,7 +266,7 @@ lc3::core::asmbl::Statement lc3::core::Assembler::buildStatement(
     ::operator<<(statement_str, ret);
     logger.printf(PrintType::P_EXTRA, true, "%s", statement_str.str().c_str());
 
-    return ret;
+    return std::make_pair(success, ret);
 }
 
 void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Statement> & statements)
