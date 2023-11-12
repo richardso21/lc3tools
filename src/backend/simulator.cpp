@@ -205,6 +205,12 @@ void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineSt
             sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "#%d 0x%0.4hx (%s)",
                 sim->stack_trace.size() - 1 - i, pc, state.getMemLine(pc).c_str());
         }
+        // if callback is an exception (e.g. access violation), we should show students which line caused it
+        if (type == CallbackType::EX_ENTER) {
+            uint16_t pc = sim->stack_trace[sim->stack_trace.size() - 1];
+            sim->logger.printf(lc3::utils::PrintType::P_ERROR, true, "PC before Exception: 0x%0.4hx (%s)",
+                pc, state.getMemLine(pc).c_str());
+        }
     } else if(type == CallbackType::SUB_EXIT || type == CallbackType::EX_EXIT || type == CallbackType::INT_EXIT) {
         sim->stack_trace.pop_back();
         sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "Stack trace");

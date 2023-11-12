@@ -708,7 +708,7 @@ EX_ACV
     PUTS
     HALT                   ; execute HALT
 
-EX_ACV_MSG     .STRINGZ "\n\n--- Access violation---\n\n"
+EX_ACV_MSG     .STRINGZ "\n\n--- Access violation ---\n\n"
 
 
 BAD_INT
