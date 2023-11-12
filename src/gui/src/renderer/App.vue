@@ -211,7 +211,7 @@ export default {
       update: {
         download_speed: 0,
         download_transferred: 0,
-        download_size: 0,
+        download_size: 0
       },
       update_dialog: false,
       update_available: false,
@@ -225,8 +225,8 @@ export default {
         liberal_asm: false,
         ignore_update: false,
         run_until_halt: false,
-        clear_out_on_reload: true,
-      },
+        clear_out_on_reload: true
+      }
     };
   },
 
@@ -259,7 +259,7 @@ export default {
       ipcRenderer.send("auto_updater", "update_confirmed");
     },
     getSettings: function() {
-      this.$storage.isPathExists("settings.json", (exists) => {
+      this.$storage.isPathExists("settings.json", exists => {
         if (exists) {
           this.$storage.get("settings.json", (err, data) => {
             if (err) {
@@ -287,7 +287,7 @@ export default {
     },
     saveSettings: function(setting) {
       this.updateGlobals(setting);
-      this.$storage.set("settings.json", this.settings, (err) => {
+      this.$storage.set("settings.json", this.settings, err => {
         if (err) {
           console.error(err);
         }
@@ -335,14 +335,14 @@ export default {
           this.settings.clear_out_on_reload
         );
       }
-    },
+    }
   },
 
   computed: {
     darkMode() {
       return this.settings.theme === "dark";
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -376,5 +376,10 @@ export default {
 body {
   user-select: none;
   cursor: default;
+}
+
+/* https://stackoverflow.com/q/56973002/11984788 */
+html {
+  overflow-y: auto;
 }
 </style>
