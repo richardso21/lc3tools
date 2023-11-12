@@ -50,6 +50,14 @@
           >
           <span v-else>Build</span>
         </v-tooltip>
+        <v-tooltip right>
+          <v-list-tile slot="activator" @click="toggleConsole()">
+            <v-list-tile-action>
+              <v-icon large>terminal</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+          <span>Toggle Console Visibility</span>
+        </v-tooltip>
       </v-list>
     </v-navigation-drawer>
 
@@ -57,7 +65,12 @@
     <v-content>
       <v-container fluid fill-height>
         <v-layout row wrap>
-          <v-flex xs12 shrink class="editor-console-wrapper">
+          <v-flex
+            xs12
+            shrink
+            class="editor-console-wrapper"
+            :class="{ 'hide-console-wrapper': !show_console }"
+          >
             <h3 id="filename" class="view-header">{{ getFilename }}</h3>
             <ace-editor
               id="ace-editor"
@@ -67,10 +80,15 @@
               lang="lc3"
               v-bind:theme="darkMode ? 'twilight' : 'textmate'"
               height="100%"
-              width="98%"
+              width="100%"
               ref="aceEditor"
             />
-            <div id="console" class="elevation-4" v-html="console_str"></div>
+            <div
+              :class="{ 'hide-console': !show_console }"
+              id="console"
+              class="elevation-4"
+              v-html="console_str"
+            ></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -99,7 +117,8 @@ export default {
         content_changed: false
       },
       console_str: "",
-      editor_theme: "textmate"
+      editor_theme: "textmate",
+      show_console: false
     };
   },
   components: {
@@ -109,6 +128,9 @@ export default {
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
   },
   methods: {
+    toggleConsole() {
+      this.show_console = !this.show_console;
+    },
     saveFileAs() {
       // Todo: try catch around this
       let new_file = remote.dialog.showSaveDialogSync({
@@ -180,6 +202,8 @@ export default {
       if (this.editor.content_changed) {
         this.saveFile();
       }
+      // show console when assembling
+      this.show_console = true;
       let success = true;
       if (this.$store.getters.activeFilePath.endsWith(".bin")) {
         try {
@@ -284,7 +308,7 @@ export default {
 .editor-console-wrapper {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto 3fr 170px;
+  grid-template-rows: auto 3fr 1fr;
   grid-row-gap: 10px;
   overflow: hidden;
 }
@@ -304,6 +328,14 @@ export default {
   margin: 15px 10px 5px 10px;
   padding: 10px;
   white-space: pre-wrap;
+}
+
+.hide-console-wrapper {
+  grid-template-rows: auto 3fr 0fr;
+}
+
+.hide-console {
+  display: none;
 }
 
 .text {

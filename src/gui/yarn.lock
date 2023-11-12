@@ -5178,9 +5178,10 @@ matcher@^3.0.0:
   dependencies:
     escape-string-regexp "^4.0.0"
 
-material-design-icons-iconfont@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/material-design-icons-iconfont/-/material-design-icons-iconfont-3.0.3.tgz#154a1084047d4e27237fa7f5a37e1075ceea6df2"
+material-design-icons-iconfont@^6.7.0:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/material-design-icons-iconfont/-/material-design-icons-iconfont-6.7.0.tgz#55cf0f3d7e4c76e032855b7e810b6e30535eff3c"
+  integrity sha512-lSj71DgVv20kO0kGbs42icDzbRot61gEDBLQACzkUuznRQBUYmbxzEkGU6dNBb5fRWHMaScYlAXX96HQ4/cJWA==
 
 math-expression-evaluator@^1.2.14:
   version "1.2.17"
