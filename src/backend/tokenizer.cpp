@@ -61,11 +61,22 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
             return *this;
         }
 
-        size_t search = line.find_last_not_of(" \t");
-        if(search != std::string::npos) {
-            // Ignore trailing whitespace.
-            line = line.substr(0, search + 1);
-        } else {
+        // check if the line is empty, NOT including comments
+        bool in_string = false;
+        uint64_t comment_idx = line.size();
+        for(uint64_t i = 0; i < line.size(); ++i) {
+            if(line[i] == '"') {
+                in_string = ! in_string;
+            }
+            if(line[i] == ';' && ! in_string) {
+                comment_idx = i;
+                break;
+            }
+        }
+        std::string line_no_comments = line.substr(0, comment_idx);
+
+        size_t search = line_no_comments.find_last_not_of(" \t");
+        if(search == std::string::npos) {
             // If here, that means the line had nothing but ' ' or '\t' on it (i.e. empty line), so ignore.
             get_new_line = true;
             return_new_line = false;
@@ -76,13 +87,13 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     }
 
     // Ignore delimeters entirely.
-    std::string delims = " \t";
+    std::string delims = ": \t";
     while(col < line.size() && delims.find(line[col]) != std::string::npos) {
         col += 1;
     }
 
     // If there's nothing left on this line, get a new line (but first return EOL).
-    // Also return EOL if comment (;) is detected instead of erasing it
+    // Also return EOL if comment (;) is detected instead of erasing it (that is, if comment isn't standalone)
     if(col >= line.size() || line[col] == ';') {
         get_new_line = true;
         return_new_line = true;
