@@ -102,6 +102,7 @@ import path from "path";
 import Vue from "vue";
 import Vuetify from "vuetify";
 import fs from "fs";
+import ace from "brace";
 
 import * as lc3 from "lc3interface";
 
@@ -292,6 +293,12 @@ export default {
     editorBinding: function(binding) {
       if (binding === "vim") {
         this.$refs.aceEditor.editor.setKeyboardHandler("ace/keyboard/vim");
+        ace.config.loadModule("ace/keyboard/vim", function(module) {
+          var VimApi = module.CodeMirror.Vim;
+          VimApi.defineEx("write", "w", function(cm, input) {
+            cm.ace.execCommand("save");
+          });
+        });
       } else {
         this.$refs.aceEditor.editor.setKeyboardHandler("");
       }
