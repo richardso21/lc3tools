@@ -583,12 +583,12 @@ export default {
 
       lc3.ClearInput();
       this.sim.running = false;
+      this.updateUI(true);
       this.sim.regs[9].value = lc3.GetRegValue("pc");
 
       if (jump_to_pc) {
         this.jumpToPC(false);
       }
-      this.updateUI(true);
       this.data_bg.backgroundColor = "";
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
@@ -654,7 +654,11 @@ export default {
           // flash and highlight registers that change from their previous values
           this.sim.regs[i].flash = 0;
           this.sim.regs[i].updated = 0;
-          if (showUpdates && prev_val !== mem_val) {
+          if (
+            showUpdates &&
+            ((i !== 9 && prev_val !== mem_val) ||
+              (i === 9 && mem_val !== prev_val + 1)) // if we are at the PC reg, we only want to flash if the new value isn't PC + 1
+          ) {
             this.sim.regs[i].flash = 1;
             setTimeout(() => {
               this.sim.regs[i].flash = 0;
