@@ -312,7 +312,12 @@
                         <i>{{ props.item.ascii }}</i>
                       </div>
                       <div class="data-cell">
-                        <i>{{ props.item.label }}</i>
+                        <v-tooltip top>
+                          <div slot="activator">
+                            <i>{{ props.item.label }}</i>
+                          </div>
+                          <span>{{ props.item.label }}</span>
+                        </v-tooltip>
                       </div>
                       <div class="data-cell">
                         <i>{{ props.item.line }}</i>
@@ -862,7 +867,7 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 35% auto;
+  grid-template-columns: 30% auto;
   grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
@@ -1001,7 +1006,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 2em 1fr 1fr 1fr 1fr 1.5fr 4fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr .75fr 2fr 5fr;
   align-items: center;
 }
 
