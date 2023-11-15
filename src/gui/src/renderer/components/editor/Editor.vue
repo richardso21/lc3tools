@@ -126,7 +126,7 @@ export default {
     "ace-editor": require("vue2-ace-editor-electron")
   },
   mounted() {
-    // setInterval(this.autosaveFile, 5 * 60 * 1000);
+    setInterval(this.autosaveFile, 5 * 60 * 1000); // autosave every 5 minutes (cool!)
   },
   methods: {
     toggleConsole() {
@@ -159,6 +159,7 @@ export default {
         );
         this.editor.original_content = this.editor.current_content;
       }
+      this.build()
     },
     autosaveFile() {
       if (
