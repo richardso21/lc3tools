@@ -315,7 +315,7 @@ export default {
 .editor-console-wrapper {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto 3fr 1fr;
+  grid-template-rows: auto 3fr 170px;
   grid-row-gap: 10px;
   overflow: hidden;
 }
