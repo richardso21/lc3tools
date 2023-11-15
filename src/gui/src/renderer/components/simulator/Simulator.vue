@@ -207,6 +207,7 @@
                       <div><strong>Hex</strong></div>
                       <div><strong>Decimal</strong></div>
                       <div><strong>ASCII</strong></div>
+                      <div><strong>Label</strong></div>
                       <div><strong>Instructions</strong></div>
                     </div>
                   </template>
@@ -309,6 +310,9 @@
                       </div>
                       <div class="data-cell">
                         <i>{{ props.item.ascii }}</i>
+                      </div>
+                      <div class="data-cell">
+                        <i>{{ props.item.label }}</i>
                       </div>
                       <div class="data-cell">
                         <i>{{ props.item.line }}</i>
@@ -415,7 +419,7 @@ export default {
         breakpoints: [],
         running: false
       },
-      mem_view: { start: 0x3000, data: [] },
+      mem_view: { start: 0x3000, data: [], sym_table: {} },
       loaded_files: new Set(),
       console_str: "",
       prev_inst_executed: 0,
@@ -459,6 +463,7 @@ export default {
       addr: 0,
       value: 0,
       line: "",
+      label: "",
       flash: 0,
       updated: 0
     });
@@ -473,6 +478,7 @@ export default {
         addr: 0,
         value: 0,
         line: "",
+        label: "",
         flash: 0,
         updated: 0
       });
@@ -516,6 +522,7 @@ export default {
       this.loaded_files.add(path);
       lc3.LoadObjectFile(path);
       this.mem_view.start = lc3.GetRegValue("pc");
+      this.mem_view.sym_table = lc3.GetCurrSymTable();
       this.updateUI();
       this.loadedSnackBar = true;
       // clear output on file (re)load
@@ -678,6 +685,13 @@ export default {
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
         this.mem_view.data[i].ascii =
           mem_val <= 127 ? String.fromCharCode(mem_val) : "";
+
+        // show label using symbol table
+        this.mem_view.data[i].label =
+          addr in this.mem_view.sym_table
+            ? this.mem_view.sym_table[addr].toUpperCase()
+            : "";
+
         // hack to highlight changed values within current display
         // (lc3tools CLI doesn't track change "history" across all memory)
         this.mem_view.data[i].flash = 0;
@@ -848,7 +862,7 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 40% auto;
+  grid-template-columns: 35% auto;
   grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
@@ -987,7 +1001,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 3em 3em 1fr 1fr 1fr 1fr 4fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 1fr 1.5fr 4fr;
   align-items: center;
 }
 

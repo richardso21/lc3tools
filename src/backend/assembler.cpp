@@ -261,6 +261,13 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
             }
         }
     }
+    // remove label from line if it is there
+    // we'll now provide the GUI the symbol table to display labels in a separate column
+    if (ret.label.isValid()) {
+        std::string label_str = ret.label->str;
+        int labelInd = ret.line.find_first_of(label_str);
+        ret.line.erase(labelInd, labelInd + label_str.length());
+    }
 
     std::stringstream statement_str;
     ::operator<<(statement_str, ret);
