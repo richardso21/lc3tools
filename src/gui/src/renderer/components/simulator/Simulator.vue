@@ -206,7 +206,6 @@
                       <div><strong>Address</strong></div>
                       <div><strong>Hex</strong></div>
                       <div><strong>Decimal</strong></div>
-                      <div><strong>ASCII</strong></div>
                       <div><strong>Label</strong></div>
                       <div><strong>Instructions</strong></div>
                     </div>
@@ -307,9 +306,6 @@
                           >
                           </v-text-field>
                         </v-edit-dialog>
-                      </div>
-                      <div class="data-cell">
-                        <i>{{ props.item.ascii }}</i>
                       </div>
                       <div class="data-cell">
                         <v-tooltip top>
@@ -688,8 +684,6 @@ export default {
         this.mem_view.data[i].addr = addr;
         this.mem_view.data[i].value = mem_val;
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
-        this.mem_view.data[i].ascii =
-          mem_val <= 127 ? String.fromCharCode(mem_val) : "";
 
         // show label using symbol table
         this.mem_view.data[i].label =
@@ -1006,7 +1000,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 2em 1fr 1fr 1fr .75fr 2fr 5fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 2fr 5fr;
   align-items: center;
 }
 
