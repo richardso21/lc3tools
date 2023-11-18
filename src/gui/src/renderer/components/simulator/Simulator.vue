@@ -90,6 +90,7 @@
                       <div><strong>Registers</strong></div>
                       <div><strong>Hex</strong></div>
                       <div><strong>Decimal</strong></div>
+                      <div><strong>ASCII / Misc</strong></div>
                     </div>
                   </template>
                   <template slot="items" slot-scope="props">
@@ -160,7 +161,11 @@
                         <span v-if="props.item.name == 'psr'"
                           >CC: {{ PSRToCC(props.item.value) }}</span
                         >
-                        <span v-else></span>
+                        <span v-else-if="props.item.name[0] === 'r'">{{
+                          props.item.value <= 127
+                            ? String.fromCharCode(props.item.value)
+                            : ""
+                        }}</span>
                       </div>
                     </tr>
                   </template>
