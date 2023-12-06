@@ -54,6 +54,13 @@ PIMicroOp MachineState::writeMem(uint16_t addr, uint16_t value)
         }
     } else {
         mem[addr].setValue(value);
+        // change line with new character if we are storing an ascii value to a line that's part of a .stringz
+        if (value <= 127 && getMemLine(addr).length() == 1) {
+            char val_char = value;
+            std::string val_ascii_to_string;
+            val_ascii_to_string += (char)value;
+            setMemLine(addr, val_ascii_to_string);
+        }
     }
 
     return nullptr;

@@ -90,10 +90,18 @@
                       <div><strong>Registers</strong></div>
                       <div><strong>Hex</strong></div>
                       <div><strong>Decimal</strong></div>
+                      <div><strong>ASCII / Misc</strong></div>
                     </div>
                   </template>
                   <template slot="items" slot-scope="props">
-                    <tr class="reg-row" v-bind:style="data_bg">
+                    <tr
+                      class="reg-row"
+                      v-bind:style="data_bg"
+                      v-bind:class="{
+                        'row-update-flash': props.item.flash,
+                        'row-updated': props.item.updated
+                      }"
+                    >
                       <div class="data-cell">
                         <strong>{{ props.item.name.toUpperCase() }}</strong>
                       </div>
@@ -115,7 +123,7 @@
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.hex,
-                                rules.size16bit,
+                                rules.size16bit
                               ])
                             "
                             :rules="[rules.hex, rules.size16bit]"
@@ -141,7 +149,7 @@
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.dec,
-                                rules.size16bit,
+                                rules.size16bit
                               ])
                             "
                             :rules="[rules.dec, rules.size16bit]"
@@ -153,7 +161,11 @@
                         <span v-if="props.item.name == 'psr'"
                           >CC: {{ PSRToCC(props.item.value) }}</span
                         >
-                        <span v-else></span>
+                        <span v-else-if="props.item.name[0] === 'r'">{{
+                          props.item.value <= 127
+                            ? String.fromCharCode(props.item.value)
+                            : ""
+                        }}</span>
                       </div>
                     </tr>
                   </template>
@@ -199,7 +211,7 @@
                       <div><strong>Address</strong></div>
                       <div><strong>Hex</strong></div>
                       <div><strong>Decimal</strong></div>
-                      <div><strong>ASCII</strong></div>
+                      <div><strong>Label</strong></div>
                       <div><strong>Instructions</strong></div>
                     </div>
                   </template>
@@ -208,6 +220,10 @@
                       class="mem-row"
                       v-bind:style="data_bg"
                       v-bind:id="PCAt(props.item.addr) ? 'row-curr-pc' : ''"
+                      v-bind:class="{
+                        'row-update-flash': props.item.flash,
+                        'row-updated': props.item.updated
+                      }"
                     >
                       <div>
                         <a
@@ -262,7 +278,7 @@
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.hex,
-                                rules.size16bit,
+                                rules.size16bit
                               ])
                             "
                             :rules="[rules.hex, rules.size16bit]"
@@ -288,7 +304,7 @@
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.dec,
-                                rules.size16bit,
+                                rules.size16bit
                               ])
                             "
                             :rules="[rules.dec, rules.size16bit]"
@@ -297,7 +313,12 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
-                        <i>{{ props.item.ascii }}</i>
+                        <v-tooltip top>
+                          <div slot="activator">
+                            <i>{{ props.item.label }}</i>
+                          </div>
+                          <span>{{ props.item.label }}</span>
+                        </v-tooltip>
                       </div>
                       <div class="data-cell">
                         <i>{{ props.item.line }}</i>
@@ -389,22 +410,22 @@ export default {
       sim: {
         // !! Do not change the order of these registers because regs[9] is referenced everywhere for PC !!
         regs: [
-          { name: "r0", value: 0 },
-          { name: "r1", value: 0 },
-          { name: "r2", value: 0 },
-          { name: "r3", value: 0 },
-          { name: "r4", value: 0 },
-          { name: "r5", value: 0 },
-          { name: "r6", value: 0 },
-          { name: "r7", value: 0 },
-          { name: "psr", value: 0 },
-          { name: "pc", value: 0 },
-          { name: "mcr", value: 0 },
+          { flash: 0, updated: 0, name: "r0", value: 0 },
+          { flash: 0, updated: 0, name: "r1", value: 0 },
+          { flash: 0, updated: 0, name: "r2", value: 0 },
+          { flash: 0, updated: 0, name: "r3", value: 0 },
+          { flash: 0, updated: 0, name: "r4", value: 0 },
+          { flash: 0, updated: 0, name: "r5", value: 0 },
+          { flash: 0, updated: 0, name: "r6", value: 0 },
+          { flash: 0, updated: 0, name: "r7", value: 0 },
+          { flash: 0, updated: 0, name: "psr", value: 0 },
+          { flash: 0, updated: 0, name: "pc", value: 0 },
+          { flash: 0, updated: 0, name: "mcr", value: 0 }
         ],
         breakpoints: [],
-        running: false,
+        running: false
       },
-      mem_view: { start: 0x3000, data: [] },
+      mem_view: { start: 0x3000, data: [], sym_table: {} },
       loaded_files: new Set(),
       console_str: "",
       prev_inst_executed: 0,
@@ -435,16 +456,23 @@ export default {
             (int_value >= 0 && int_value <= 0xffff) ||
             "Value must be between 0 and xFFFF"
           );
-        },
+        }
       },
       loadedSnackBar: false,
-      jmp_to_loc_field: "",
+      jmp_to_loc_field: ""
     };
   },
   components: {},
   created() {},
   beforeMount() {
-    this.mem_view.data.push({ addr: 0, value: 0, line: "" });
+    this.mem_view.data.push({
+      addr: 0,
+      value: 0,
+      line: "",
+      label: "",
+      flash: 0,
+      updated: 0
+    });
   },
   mounted() {
     for (
@@ -452,7 +480,14 @@ export default {
       i < Math.floor(this.$refs.memView.clientHeight / 24) - 5;
       i++
     ) {
-      this.mem_view.data.push({ addr: 0, value: 0, line: "" });
+      this.mem_view.data.push({
+        addr: 0,
+        value: 0,
+        line: "",
+        label: "",
+        flash: 0,
+        updated: 0
+      });
     }
     this.updateUI();
     this.jumpToPC(true);
@@ -479,7 +514,7 @@ export default {
       if (!path) {
         selectedFiles = remote.dialog.showOpenDialogSync({
           properties: ["openFile", "multiSelections"],
-          filters: [{ name: "Objects", extensions: ["obj"] }],
+          filters: [{ name: "Objects", extensions: ["obj"] }]
         });
       }
 
@@ -493,6 +528,7 @@ export default {
       this.loaded_files.add(path);
       lc3.LoadObjectFile(path);
       this.mem_view.start = lc3.GetRegValue("pc");
+      this.mem_view.sym_table = lc3.GetCurrSymTable();
       this.updateUI();
       this.loadedSnackBar = true;
       // clear output on file (re)load
@@ -501,7 +537,7 @@ export default {
       }
     },
     reloadFiles() {
-      this.loaded_files.forEach((path) => {
+      this.loaded_files.forEach(path => {
         this.loadFile(path);
       });
       this.updateUI();
@@ -515,7 +551,7 @@ export default {
         this.sim.running = true;
         this.data_bg.backgroundColor = "lightgrey";
         return new Promise((resolve, reject) => {
-          let callback = (error) => {
+          let callback = error => {
             if (error) {
               reject(error);
               return;
@@ -560,12 +596,12 @@ export default {
 
       lc3.ClearInput();
       this.sim.running = false;
+      this.updateUI(true);
       this.sim.regs[9].value = lc3.GetRegValue("pc");
 
       if (jump_to_pc) {
         this.jumpToPC(false);
       }
-      this.updateUI();
       this.data_bg.backgroundColor = "";
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
@@ -582,7 +618,7 @@ export default {
         Backspace: 0x08,
         Tab: 0x09,
         Escape: 0x1b,
-        Delete: 0x7f,
+        Delete: 0x7f
       };
       // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
       let key = event.key,
@@ -621,21 +657,56 @@ export default {
         this.updateUI();
       }
     },
-    updateUI() {
+    updateUI(showUpdates = false, updateReg = true) {
       // Registers
-      for (let i = 0; i < this.sim.regs.length; i++) {
-        this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
+      if (updateReg) {
+        for (let i = 0; i < this.sim.regs.length; i++) {
+          const mem_val = lc3.GetRegValue(this.sim.regs[i].name);
+          const prev_val = this.sim.regs[i].value;
+          this.sim.regs[i].value = mem_val;
+          // flash and highlight registers that change from their previous values
+          this.sim.regs[i].flash = 0;
+          this.sim.regs[i].updated = 0;
+          if (
+            showUpdates &&
+            ((i !== 9 && prev_val !== mem_val) ||
+              (i === 9 && mem_val !== prev_val + 1)) // if we are at the PC reg, we only want to flash if the new value isn't PC + 1
+          ) {
+            this.sim.regs[i].flash = 1;
+            setTimeout(() => {
+              this.sim.regs[i].flash = 0;
+              this.sim.regs[i].updated = 1;
+            }, 250);
+          }
+        }
       }
 
       // Memory
       for (let i = 0; i < this.mem_view.data.length; i++) {
         let addr = (this.mem_view.start + i) & 0xffff;
         let mem_val = lc3.GetMemValue(addr);
+        const prev_val = this.mem_view.data[i].value;
         this.mem_view.data[i].addr = addr;
         this.mem_view.data[i].value = mem_val;
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
-        this.mem_view.data[i].ascii =
-          mem_val <= 127 ? String.fromCharCode(mem_val) : "";
+
+        // show label using symbol table
+        this.mem_view.data[i].label =
+          addr in this.mem_view.sym_table
+            ? this.mem_view.sym_table[addr].toUpperCase()
+            : "";
+
+        // hack to highlight changed values within current display
+        // (lc3tools CLI doesn't track change "history" across all memory)
+        this.mem_view.data[i].flash = 0;
+        this.mem_view.data[i].updated = 0;
+        if (showUpdates && mem_val !== prev_val) {
+          this.mem_view.data[i].flash = 1;
+          setTimeout(() => {
+            this.mem_view.data[i].flash = 0;
+            this.mem_view.data[i].updated = 1;
+          }, 250);
+        }
       }
 
       this.updateConsole();
@@ -694,7 +765,7 @@ export default {
     // Memory view jump functions
     jumpToMemView(new_start) {
       this.mem_view.start = new_start & 0xffff;
-      this.updateUI();
+      this.updateUI(false, false);
     },
     jumpToMemViewStr() {
       this.jmp_to_loc_field = this.jmp_to_loc_field.toLowerCase();
@@ -766,14 +837,14 @@ export default {
         mod_value = "0" + mod_value;
       }
       return parseInt(mod_value);
-    },
+    }
   },
   computed: {
     darkMode() {
       return this.$store.getters.theme === "dark";
-    },
+    }
   },
-  watch: {},
+  watch: {}
 };
 </script>
 
@@ -795,7 +866,7 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 40% auto;
+  grid-template-columns: 30% auto;
   grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
@@ -838,6 +909,14 @@ export default {
   grid-template-columns: 1fr 1fr 1fr 2fr;
   align-items: center;
   padding-left: 10px;
+}
+
+.row-update-flash {
+  background-color: #fff700a0;
+}
+
+.row-updated {
+  background-color: #fff70038;
 }
 
 .row-header {
@@ -926,7 +1005,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 3em 3em 1fr 1fr 1fr 1fr 4fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 2fr 5fr;
   align-items: center;
 }
 

@@ -5,7 +5,7 @@ import App from "./App";
 import router from "./router";
 import store from "./store";
 
-import "material-design-icons-iconfont/dist/material-design-icons.css";
+import "material-design-icons-iconfont/dist/material-design-icons.min.css";
 import "vuetify/dist/vuetify.min.css";
 
 if (!process.env.IS_WEB) {

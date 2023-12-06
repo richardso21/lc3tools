@@ -50,6 +50,14 @@
           >
           <span v-else>Build</span>
         </v-tooltip>
+        <v-tooltip right>
+          <v-list-tile slot="activator" @click="toggleConsole()">
+            <v-list-tile-action>
+              <v-icon large>terminal</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+          <span>Toggle Console Visibility</span>
+        </v-tooltip>
       </v-list>
     </v-navigation-drawer>
 
@@ -57,7 +65,12 @@
     <v-content>
       <v-container fluid fill-height>
         <v-layout row wrap>
-          <v-flex xs12 shrink class="editor-console-wrapper">
+          <v-flex
+            xs12
+            shrink
+            class="editor-console-wrapper"
+            :class="{ 'hide-console-wrapper': !show_console }"
+          >
             <h3 id="filename" class="view-header">{{ getFilename }}</h3>
             <ace-editor
               id="ace-editor"
@@ -67,10 +80,15 @@
               lang="lc3"
               v-bind:theme="darkMode ? 'twilight' : 'textmate'"
               height="100%"
-              width="98%"
+              width="100%"
               ref="aceEditor"
             />
-            <div id="console" class="elevation-4" v-html="console_str"></div>
+            <div
+              :class="{ 'hide-console': !show_console }"
+              id="console"
+              class="elevation-4"
+              v-html="console_str"
+            ></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -84,6 +102,7 @@ import path from "path";
 import Vue from "vue";
 import Vuetify from "vuetify";
 import fs from "fs";
+import ace from "brace";
 
 import * as lc3 from "lc3interface";
 
@@ -99,16 +118,20 @@ export default {
         content_changed: false
       },
       console_str: "",
-      editor_theme: "textmate"
+      editor_theme: "textmate",
+      show_console: false
     };
   },
   components: {
     "ace-editor": require("vue2-ace-editor-electron")
   },
   mounted() {
-    // setInterval(this.autosaveFile, 5 * 60 * 1000);
+    setInterval(this.autosaveFile, 5 * 60 * 1000); // autosave every 5 minutes (cool!)
   },
   methods: {
+    toggleConsole() {
+      this.show_console = !this.show_console;
+    },
     saveFileAs() {
       // Todo: try catch around this
       let new_file = remote.dialog.showSaveDialogSync({
@@ -136,6 +159,7 @@ export default {
         );
         this.editor.original_content = this.editor.current_content;
       }
+      this.build()
     },
     autosaveFile() {
       if (
@@ -180,6 +204,8 @@ export default {
       if (this.editor.content_changed) {
         this.saveFile();
       }
+      // show console when assembling
+      this.show_console = true;
       let success = true;
       if (this.$store.getters.activeFilePath.endsWith(".bin")) {
         try {
@@ -268,6 +294,12 @@ export default {
     editorBinding: function(binding) {
       if (binding === "vim") {
         this.$refs.aceEditor.editor.setKeyboardHandler("ace/keyboard/vim");
+        ace.config.loadModule("ace/keyboard/vim", function(module) {
+          var VimApi = module.CodeMirror.Vim;
+          VimApi.defineEx("write", "w", function(cm, input) {
+            cm.ace.execCommand("save");
+          });
+        });
       } else {
         this.$refs.aceEditor.editor.setKeyboardHandler("");
       }
@@ -304,6 +336,14 @@ export default {
   margin: 15px 10px 5px 10px;
   padding: 10px;
   white-space: pre-wrap;
+}
+
+.hide-console-wrapper {
+  grid-template-rows: auto 3fr 0fr;
+}
+
+.hide-console {
+  display: none;
 }
 
 .text {

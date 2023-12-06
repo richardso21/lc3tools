@@ -21,6 +21,9 @@ utils::UIInputter inputter;
 std::shared_ptr<lc3::as> as = nullptr;
 std::shared_ptr<lc3::conv> conv = nullptr;
 std::shared_ptr<lc3::sim> sim = nullptr;
+// keep track of the symbol table associated with the assembled file
+// (baking the symbol table into the object file is out of my reach)
+lc3::core::SymbolTable currSymTable; 
 bool hit_breakpoint = false;
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
@@ -118,10 +121,26 @@ NAN_METHOD(Assemble)
 
     try {
         auto ret = as->assemble(asm_filename);
+        currSymTable = ret->second;
         if(! ret) {
             Nan::ThrowError("assembly failed");
         }
     } catch(std::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_METHOD(GetCurrSymTable)
+{
+    try {
+        // create js/v8 object from std::map<string, uint> symbol table
+        v8::Local<v8::Object> ret = Nan::New<v8::Object>();
+        for (auto it = currSymTable.begin(); it != currSymTable.end(); it++) {
+            Nan::Set(ret, Nan::New(it->second), Nan::New(it->first).ToLocalChecked());
+            // returned object will have addresses as the keys for easier lookup on GUI side
+        }
+        info.GetReturnValue().Set(ret);
+    } catch(std:: exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -656,6 +675,7 @@ NAN_MODULE_INIT(NanInit)
 
     NAN_EXPORT(target, ConvertBin);
     NAN_EXPORT(target, Assemble);
+    NAN_EXPORT(target, GetCurrSymTable);
     NAN_EXPORT(target, SetEnableLiberalAsm);
     NAN_EXPORT(target, LoadObjectFile);
 
