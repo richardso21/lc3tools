@@ -154,15 +154,17 @@ PIMicroOp JSRRInstruction::buildMicroOps(MachineState const & state) const
 {
     (void) state;
 
-    PIMicroOp link = std::make_shared<RegWritePCMicroOp>(7);
-    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(3)->getValue());
+    PIMicroOp temp = std::make_shared<RegWritePCMicroOp>(8); // TEMP=PC*
+    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(3)->getValue()); // PC=BaseR
+    PIMicroOp link = std::make_shared<RegAddImmMicroOp>(7, 8, 0); // R7=TEMP
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
     PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::SUBROUTINE);
 
-    link->insert(jump);
-    jump->insert(callback);
+    temp->insert(jump);
+    jump->insert(link);
+    link->insert(callback);
     callback->insert(func_trace);
-    return link;
+    return temp;
 }
 
 PIMicroOp LDInstruction::buildMicroOps(MachineState const & state) const
