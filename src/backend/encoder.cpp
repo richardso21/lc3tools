@@ -43,6 +43,11 @@ bool Encoder::isStringValidReg(std::string const & search) const
     return regs.find(lower_search) != regs.end() || regs.find(lower_search_comma) != regs.end();
 }
 
+bool Encoder::isStringInstructionName(std::string const & name) const
+{
+    return instructions_by_name.count(utils::toLower(name));
+}
+
 bool Encoder::isValidPseudoOrig(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".orig") {
@@ -226,9 +231,6 @@ lc3::optional<lc3::core::PIInstruction> Encoder::validateInstruction(Statement c
 
     if(! isInst(statement)) { return {}; }
 
-    using Candidate = std::tuple<PIInstruction, uint32_t, uint32_t>;
-    std::vector<Candidate> candidates;
-
     std::string statement_op_string = "";
     for(StatementPiece const & statement_op : statement.operands) {
         switch(statement_op.type) {
@@ -239,12 +241,15 @@ lc3::optional<lc3::core::PIInstruction> Encoder::validateInstruction(Statement c
         }
     }
 
+    bool name_match = false;
+    PIInstruction match = nullptr;
+
     for(auto const & candidate_inst_name : instructions_by_name) {
-        uint32_t inst_name_dist = levDistance(utils::toLower(statement.base->str), candidate_inst_name.first);
-        if(inst_name_dist < 2) {
+        name_match = utils::toLower(statement.base->str) == candidate_inst_name.first;
+        if(name_match) {
             for(PIInstruction candidate_inst : candidate_inst_name.second) {
-                // Convert the operand types of the candidate and the statement into a string so that Levenshtein
-                // distance can be used on the operands too.
+                // Convert the operand types of the candidate and the statement into a string so
+                // that string comparison can be used on the operands too.
                 std::string candidate_op_string = "";
                 for(PIOperand candidate_op : candidate_inst->getOperands()) {
                     switch(candidate_op->getType()) {
@@ -255,76 +260,50 @@ lc3::optional<lc3::core::PIInstruction> Encoder::validateInstruction(Statement c
                     }
                 }
 
+                bool full_match = false;
+
                 // If there's a label in the operands, then the statement can either have a numberic or string
-                // operand, so check against s and n. Otherwise, just measure distance normally.
+                // operand, so check against s and n. Otherwise, just compare normally.
                 if(candidate_op_string.find('l') != std::string::npos) {
                     std::string candidate_op_string_copy = candidate_op_string;
                     std::replace(candidate_op_string_copy.begin(), candidate_op_string_copy.end(), 'l', 's');
-                    uint32_t op_dist_s = levDistance(statement_op_string, candidate_op_string_copy);
+                    bool op_match_s = statement_op_string == candidate_op_string_copy;
 
                     candidate_op_string_copy = candidate_op_string;
                     std::replace(candidate_op_string_copy.begin(), candidate_op_string_copy.end(), 'l', 'n');
-                    uint32_t op_dist_n = levDistance(statement_op_string, candidate_op_string_copy);
+                    bool op_match_n = statement_op_string == candidate_op_string_copy;
 
-                    candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist,
-                        op_dist_n < op_dist_s ? op_dist_n : op_dist_s));
+                    full_match = op_match_s || op_match_n;
                 } else {
-                    uint32_t op_dist = levDistance(statement_op_string, candidate_op_string);
-                    candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist, op_dist));
+                    full_match = statement_op_string == candidate_op_string;
+                }
+
+                if (full_match) {
+                    match = candidate_inst;
+                    break;
                 }
             }
+
+            break;
         }
     }
 
-    std::sort(std::begin(candidates), std::end(candidates), [](Candidate a, Candidate b) {
-        return (std::get<1>(a) + std::get<2>(a)) < (std::get<1>(b) + std::get<2>(b));
-    });
-
-    // If there are no candidates or if the instruction itself was not a perfect match, print out unique candidates.
-    if(candidates.size() == 0 || std::get<1>(candidates[0]) != 0) {
+    // If there are no candidates or if the instruction itself was not a perfect match
+    if(!name_match) {
         logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid instruction");
-        std::string prev_candidate_inst_name = "";
-        uint32_t candidate_count = 0;
-        for(Candidate const & candidate : candidates) {
-            std::string const & candidate_inst_name = std::get<0>(candidate)->getName();
-            if(candidate_inst_name != prev_candidate_inst_name) {
-                if(candidate_count < 3) {
-                    logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?", candidate_inst_name.c_str());
-                    prev_candidate_inst_name = candidate_inst_name;
-                }
-                candidate_count += 1;
-            }
-        }
-        if(candidate_count > 3) {
-            logger.printf(PrintType::P_NOTE, false, "...or %d other candidate(s) (not shown)", candidate_count - 3);
-        }
         logger.newline();
         return {};
     }
 
-    // If the instruction was a match but the operands weren't, print out more detail about candidates for that
-    // instruction.
-    if(std::get<2>(candidates[0]) != 0) {
+    // If the instruction was a match but the operands weren't
+    if(!match) {
         logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid usage of \'%s\' instruction",
             statement.base->str.c_str());
-        uint32_t candidate_count = 0;
-        for(Candidate const & candidate : candidates) {
-            if(utils::toLower(statement.base->str) == std::get<0>(candidate)->getName()) {
-                if(candidate_count < 3) {
-                    logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?",
-                        std::get<0>(candidate)->toFormatString().c_str());
-                }
-                candidate_count += 1;
-            }
-        }
-        if(candidate_count > 3) {
-            logger.printf(PrintType::P_NOTE, false, "...or %d other candidate(s) (not shown)", candidate_count - 3);
-        }
         logger.newline();
         return {};
     }
 
-    return std::get<0>(candidates[0]);
+    return match;
 }
 
 uint32_t Encoder::getPseudoOrig(Statement const & statement) const
@@ -444,41 +423,4 @@ lc3::optional<uint32_t> Encoder::encodeInstruction(Statement const & statement, 
     }
 
     return encoding;
-}
-
-uint32_t Encoder::getDistanceToNearestInstructionName(std::string const & search) const
-{
-    std::string lower_search = utils::toLower(search);
-    uint32_t min_distance = 0;
-    bool min_set = false;
-    for(auto const & inst : instructions_by_name) {
-        uint32_t distance = levDistance(inst.first, lower_search);
-        if(! min_set || distance < min_distance) {
-            min_distance = distance;
-            min_set = true;
-        }
-    }
-
-    return min_distance;
-}
-
-uint32_t Encoder::levDistance(std::string const & a, std::string const & b) const
-{
-    return levDistanceHelper(a, (uint32_t) a.size(), b, (uint32_t) b.size());
-}
-
-uint32_t Encoder::levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const
-{
-    // lazy, redundant recursive version of Levenshtein distance...may use dynamic programming eventually
-    if(a_len == 0) { return b_len; }
-    if(b_len == 0) { return a_len; }
-
-    uint32_t cost = (a[a_len - 1] == b[b_len - 1]) ? 0 : 1;
-
-    std::array<uint32_t, 3> costs;
-    costs[0] = levDistanceHelper(a, a_len - 1, b, b_len    ) + 1;
-    costs[1] = levDistanceHelper(a, a_len    , b, b_len - 1) + 1;
-    costs[2] = levDistanceHelper(a, a_len - 1, b, b_len - 1) + cost;
-
-    return *std::min_element(std::begin(costs), std::end(costs));
 }
