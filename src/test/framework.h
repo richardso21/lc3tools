@@ -5,12 +5,30 @@
 /*
  * This file is an unpleasant artifact of breaking backward compatibility with framework1.
  *
- * The purpose is to act as a wrapper around the names in framework1 and framework2 so that,
+ * The purpose is to act as a wrapper around the names in framework1, framework2, and framework2110 so that,
  * to the unit test, using framework2 is as simple as adding a single #define FRAMEWORK2,
  * and anything without that define will default to framework1.
  */
 
-#if API_VER == 2
+#if API_VER == 2110
+    #include "framework2110.h"
+    using Tester = framework2110::Tester;
+
+    void setup(Tester &);
+    void shutdown(void);
+    void testBringup(lc3::sim &);
+    void testTeardown(lc3::sim &);
+
+    int main(int argc, char * argv[])
+    {
+        framework2110::setup = setup;
+        framework2110::shutdown = shutdown;
+        framework2110::testBringup = testBringup;
+        framework2110::testTeardown = testTeardown;
+
+        framework2110::main(argc, argv);
+    }
+#elif API_VER == 2
     #include "framework2.h"
     using Tester = framework2::Tester;
 

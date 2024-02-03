@@ -129,7 +129,8 @@ int main(int argc, char * argv[])
             }
             std::cout << std::endl;
             for(std::string const & obj_filename : obj_filenames) {
-                if(! simulator.loadObjFile(obj_filename)) {
+                auto res = simulator.loadObjFile(obj_filename);
+                if(!res.first) {
                     std::cout << "could not init simulator\n";
                     return 2;
                 }

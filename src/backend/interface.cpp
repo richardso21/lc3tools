@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <random>
+#include <utility>
 
 #include "device_regs.h"
 #include "interface.h"
@@ -35,13 +36,14 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     cur_sub_depth = 0;
 }
 
-bool lc3::sim::loadObjFile(std::string const & filename)
+std::pair<bool, std::string> lc3::sim::loadObjFile(std::string const & filename)
 {
     std::ifstream obj_file(filename, std::ios_base::binary);
     if(! obj_file) {
-        printer.print("could not open file " + filename);
+        std::string err = "could not open file " + filename;
+        printer.print(err);
         printer.newline();
-        return false;
+        return std::make_pair(false, err);
     }
 
     try {
@@ -51,10 +53,11 @@ bool lc3::sim::loadObjFile(std::string const & filename)
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
 #endif
-        return false;
+        // return false;
+        return std::make_pair(false, "caught exception: " + std::string(e.what()));
     }
 
-    return true;
+    return std::make_pair(true, "");
 }
 
 void lc3::sim::setup(void)

@@ -1,0 +1,472 @@
+/*
+ * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or
+ * distribution without the prior written consent of McGraw-Hill Education.
+ */
+#include <nlohmann/json.hpp>
+#include <sstream>
+
+#include "common.h"
+#include "console_printer.h"
+#include "framework2110.h"
+using json = nlohmann::json;
+
+int MAX_FAILURES = 8;
+
+namespace framework2110 {
+struct CLIArgs {
+  bool json_output = false;
+  uint32_t print_output = false;
+  uint32_t asm_print_level = 0;
+  uint32_t asm_print_level_override = false;
+  uint32_t sim_print_level = 0;
+  uint32_t sim_print_level_override = false;
+  bool ignore_privilege = false;
+  bool tester_verbose = false;
+  uint64_t seed = 0;
+  std::vector<std::string> test_filter;
+};
+
+std::function<void(Tester &)> setup = nullptr;
+std::function<void(void)> shutdown = nullptr;
+std::function<void(lc3::sim &)> testBringup = nullptr;
+std::function<void(lc3::sim &)> testTeardown = nullptr;
+
+int main(int argc, char *argv[]) {
+  if (setup == nullptr || shutdown == nullptr || testBringup == nullptr ||
+      testTeardown == nullptr) {
+    // Will never happen if framework.h wrapper is used, since, if any of these
+    // functions are missing, linking will fail.
+    std::cerr << "Unit test does not implement necessary functionality.\n";
+    return 0;
+  }
+
+  CLIArgs args;
+  std::vector<std::pair<std::string, std::string>> parsed_args =
+      parseCLIArgs(argc, argv);
+  for (auto const &arg : parsed_args) {
+    if (std::get<0>(arg) == "json-output") {
+      args.json_output = true;
+    } else if (std::get<0>(arg) == "print-output") {
+      args.print_output = true;
+    } else if (std::get<0>(arg) == "asm-print-level") {
+      args.asm_print_level = std::stoi(std::get<1>(arg));
+      args.asm_print_level_override = true;
+    } else if (std::get<0>(arg) == "sim-print-level") {
+      args.sim_print_level = std::stoi(std::get<1>(arg));
+      args.sim_print_level_override = true;
+      args.print_output = true;
+    } else if (std::get<0>(arg) == "ignore-privilege") {
+      args.ignore_privilege = true;
+    } else if (std::get<0>(arg) == "tester-verbose") {
+      args.tester_verbose = true;
+    } else if (std::get<0>(arg) == "seed") {
+      args.seed = std::stoull(std::get<1>(arg));
+    } else if (std::get<0>(arg) == "test-filter") {
+      args.test_filter.push_back(std::get<1>(arg));
+    } else if (std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
+      std::cout << "usage: " << argv[0] << " [OPTIONS] FILE [FILE...]\n";
+      std::cout << "\n";
+      std::cout << "  -h,--help              Print this message\n";
+      std::cout
+          << "  --json-output          Output test results in JSON format\n";
+      std::cout << "  --print-output         Print program output\n";
+      std::cout
+          << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
+      std::cout
+          << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
+      std::cout << "  --ignore-privilege     Ignore access violations\n";
+      std::cout << "  --tester-verbose       Output tester messages\n";
+      std::cout << "  --seed=N               Optional seed for randomization\n";
+      std::cout << "  --test-filter=TEST     Only run TEST (can be repeated)\n";
+      return 0;
+    }
+  }
+
+  lc3::ConsolePrinter asm_printer;
+  lc3::as assembler(asm_printer,
+                    args.asm_print_level_override ? args.asm_print_level : 0,
+                    false);
+  lc3::conv converter(asm_printer,
+                      args.asm_print_level_override ? args.asm_print_level : 0);
+  lc3::core::SymbolTable symbol_table;
+
+  std::vector<std::string> obj_filenames;
+  bool valid_program = true;
+  for (int i = 1; i < argc; i += 1) {
+    std::string filename(argv[i]);
+    if (filename[0] != '-') {
+      lc3::optional<std::string> result;
+      if (!endsWith(filename, ".obj")) {
+        if (endsWith(filename, ".bin")) {
+          result = converter.convertBin(filename);
+        } else {
+          lc3::optional<std::pair<std::string, lc3::core::SymbolTable>>
+              asm_result;
+          asm_result = assembler.assemble(filename);
+          if (asm_result) {
+            symbol_table.insert(asm_result->second.begin(),
+                                asm_result->second.end());
+            result = asm_result->first;
+          }
+        }
+      } else {
+        result = filename;
+      }
+
+      if (result) {
+        obj_filenames.push_back(*result);
+      } else {
+        valid_program = false;
+      }
+    }
+  }
+
+  if (obj_filenames.size() == 0) {
+    return 1;
+  }
+
+  if (valid_program) {
+    Tester tester(args.print_output,
+                  args.sim_print_level_override ? args.sim_print_level : 1,
+                  args.ignore_privilege, args.tester_verbose, args.seed,
+                  obj_filenames);
+    tester.setSymbolTable(symbol_table);
+    setup(tester);
+
+    if (args.test_filter.size() == 0) {
+      tester.testAll();
+    } else {
+      for (std::string const &test_name : args.test_filter) {
+        tester.testSingle(test_name);
+      }
+    }
+
+    if (args.json_output) {
+      tester.printJson();
+    } else {
+      tester.printResults();
+    }
+
+    shutdown();
+  }
+
+  return 0;
+}
+
+TestCase::TestCase(std::string const &name, test_func_t test_func,
+                   bool randomize)
+    : name(name), test_func(test_func), randomize(randomize) {}
+
+Tester::Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
+               bool verbose, uint64_t seed,
+               std::vector<std::string> const &obj_filenames)
+    : print_output(print_output), ignore_privilege(ignore_privilege),
+      verbose(verbose), print_level(print_level), seed(seed),
+      obj_filenames(obj_filenames) {}
+
+void Tester::registerTest(std::string const &name, test_func_t test_func,
+                          bool randomize) {
+  tests.emplace_back(name, test_func, randomize);
+}
+
+void Tester::testAll(void) {
+  for (TestCase const &test : tests) {
+    curr_test_result = TestResult{};
+    testSingle(test);
+    test_results.push_back(curr_test_result);
+  }
+}
+
+void Tester::testSingle(std::string const &test_name) {
+  for (TestCase const &test : tests) {
+    if (test.name == test_name) {
+      return testSingle(test);
+    }
+  }
+  return;
+}
+
+void Tester::testSingle(TestCase const &test) {
+  // clear ostringstream for output of this test
+  curr_output.str(std::string());
+
+  BufferedPrinter printer(print_output);
+  StringInputter inputter;
+  lc3::sim simulator(printer, inputter, print_level);
+  this->printer = &printer;
+  this->inputter = &inputter;
+  this->simulator = &simulator;
+
+  curr_test_result.test_name = test.name;
+
+  if (test.randomize) {
+    if (seed == 0) {
+      seed = simulator.randomizeState();
+    } else {
+      simulator.randomizeState(seed);
+    }
+    curr_test_result.seed = seed;
+  } else {
+    curr_test_result.seed = -1;
+  }
+
+  for (std::string const &obj_filename : obj_filenames) {
+    auto res = simulator.loadObjFile(obj_filename);
+    if (!res.first) {
+      error("Simulator initialization failed", res.second);
+      return;
+    }
+  }
+
+  testBringup(simulator);
+
+  if (ignore_privilege) {
+    simulator.setIgnorePrivilege(true);
+  }
+
+  try {
+    test.test_func(simulator, *this);
+  } catch (std::exception &e) {
+    error("Test case ran into exception", e.what());
+    return;
+  }
+
+  curr_test_result.output = curr_output.str();
+
+  testTeardown(simulator);
+
+  this->printer = nullptr;
+  this->inputter = nullptr;
+  this->simulator = nullptr;
+}
+
+template <typename T>
+void Tester::verify(std::string const &label, T out, T expected,
+                    bool (*comp)(T, T), std::string (*print)(T)) {
+  std::ostringstream message;
+  message << "Expected: " << print(expected) << ", Got: " << print(out)
+          << std::endl;
+  appendTestPart(label, message, comp(out, expected));
+}
+
+template <typename T>
+void Tester::verify(std::string const &label, T out, T expected) {
+  std::ostringstream message;
+  message << "Expected: " << expected << ", Got: " << out << std::endl;
+  appendTestPart(label, message, out == expected);
+}
+
+void Tester::verify(std::string const &label, bool pass) {
+  appendTestPart(label, "", pass);
+}
+
+void Tester::appendTestPart(std::string const &label,
+                            std::string const &message, bool pass) {
+  TestPart *test_part = new TestPart{};
+  test_part->label = label;
+  test_part->message = message;
+  if (!pass) {
+    curr_test_result.fail_inds.insert(curr_test_result.parts.size());
+  }
+  curr_test_result.parts.push_back(test_part);
+}
+
+void Tester::output(std::string const &message) {
+  curr_output << message << "\n";
+}
+
+void Tester::debugOutput(std::string const &message) {
+  if (verbose) {
+    std::cout << " " << message << "\n";
+  }
+}
+
+void Tester::error(std::string const &label, std::string const &message) {
+  TestPart *error = new TestPart{};
+  error->label = label;
+  error->message = message;
+  curr_test_result.error = error;
+}
+
+void Tester::printResults() {
+  for (const TestResult &test_result : test_results) {
+    std::cout << "==========\n";
+    std::cout << "Test: " << test_result.test_name;
+    if (test_result.seed != -1) {
+      std::cout << " (Randomized Machine, Seed: " << seed << ")";
+    }
+    std::cout << std::endl;
+    std::cout << test_result.output;
+    auto error = test_result.error;
+    if (error) {
+      std::cout << error->label << ":\n" << error->message << std::endl;
+      continue;
+    }
+    auto parts = test_result.parts;
+    for (int i = 0; i < parts.size(); i++) {
+      auto part = parts.at(i);
+      bool part_passed = test_result.fail_inds.count(i) == 0;
+      std::cout << (part_passed ? "--" : "!!") << part->label << " => ";
+      std::cout << (part_passed ? "Pass" : "FAIL") << std::endl;
+      if (!part->message.empty())
+        std::cout << part->message << std::endl;
+    }
+  }
+}
+
+void Tester::printJson() {
+  // json output mimics `--zucchini` flag output from circuitsim-tester
+  json test_results_json = json::array();
+  for (const TestResult &test_result : test_results) {
+    json test_result_json;
+    json partial_fails = json::array();
+    test_result_json["testName"] = test_result.test_name;
+    test_result_json["seed"] = test_result.seed;
+    test_result_json["output"] = test_result.output;
+
+    if (test_result.error) {
+      json e = {
+          {"label", test_result.error->label},
+          {"message", test_result.error->message},
+      };
+      partial_fails.push_back(e);
+      test_result_json["partialFailures"] = partial_fails;
+      test_result_json["total"] = 1;
+      test_result_json["failed"] = test_result_json["total"];
+      test_results_json.push_back(test_result_json);
+      continue;
+    }
+
+    test_result_json["total"] = test_result.parts.size();
+    int num_fails = test_result.fail_inds.size();
+    test_result_json["failed"] = num_fails;
+    if (num_fails > 0) {
+      auto parts = test_result.parts;
+      int i = 0;
+      int c = 0;
+      while (i < parts.size() && c < MAX_FAILURES) {
+        if (test_result.fail_inds.count(i) == 0)
+          continue;
+        auto part = parts.at(i);
+        json part_json = {
+            {"label", part->label},
+            {"message", part->message},
+        };
+        partial_fails.push_back(part_json);
+        i++;
+        c++;
+      }
+    }
+    test_result_json["partialFailures"] = partial_fails;
+    test_results_json.push_back(test_result_json);
+  }
+  json out;
+  out["tests"] = test_results_json;
+  std::cout << out.dump(2, ' ', true) << std::endl;
+}
+
+std::string Tester::getOutput(void) const {
+  auto const &buffer = printer->getBuffer();
+  return std::string{buffer.begin(), buffer.end()};
+}
+
+bool Tester::checkContain(std::string const &str,
+                          std::string const &expected_part) const {
+  if (expected_part.size() > str.size()) {
+    return false;
+  }
+
+  for (uint64_t i = 0; i < str.size(); ++i) {
+    uint64_t j;
+    for (j = 0; j < expected_part.size() && i + j < str.size(); ++j) {
+      if (str[i + j] != expected_part[j]) {
+        break;
+      }
+    }
+    if (j == expected_part.size()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+double Tester::checkSimilarity(std::string const &source,
+                               std::string const &target) const {
+  std::vector<char> source_buffer{source.begin(), source.end()};
+  std::vector<char> target_buffer{target.begin(), target.end()};
+  return checkSimilarityHelper(source_buffer, target_buffer);
+}
+
+double Tester::checkSimilarityHelper(std::vector<char> const &source,
+                                     std::vector<char> const &target) const {
+  if (source.size() > target.size()) {
+    return checkSimilarityHelper(target, source);
+  }
+
+  std::size_t min_size = source.size(), max_size = target.size();
+  std::vector<std::size_t> lev_dist(min_size + 1);
+
+  for (std::size_t i = 0; i < min_size + 1; i += 1) {
+    lev_dist[i] = i;
+  }
+
+  for (std::size_t j = 1; j < max_size + 1; j += 1) {
+    std::size_t prev_diag = lev_dist[0];
+    ++lev_dist[0];
+
+    for (std::size_t i = 1; i < min_size + 1; i += 1) {
+      std::size_t prev_diag_tmp = lev_dist[i];
+      if (source[i - 1] == target[j - 1]) {
+        lev_dist[i] = prev_diag;
+      } else {
+        lev_dist[i] =
+            std::min(std::min(lev_dist[i - 1], lev_dist[i]), prev_diag) + 1;
+      }
+      prev_diag = prev_diag_tmp;
+    }
+  }
+
+  return 1 - static_cast<double>(lev_dist[min_size]) / min_size;
+}
+
+std::string Tester::getPreprocessedString(std::string const &str,
+                                          uint64_t type) const {
+  std::vector<char> buffer{str.begin(), str.end()};
+
+  // Always remove trailing whitespace
+  for (uint64_t i = 0; i < buffer.size(); i += 1) {
+    if (buffer[i] == '\n') {
+      int64_t pos = i - 1;
+      while (pos >= 0 && std::isspace(buffer[pos])) {
+        buffer.erase(buffer.begin() + pos);
+        if (pos == 0 || buffer[pos - 1] == '\n') {
+          break;
+        }
+        --pos;
+      }
+    }
+  }
+
+  // Always remove new lines at end of file
+  for (int64_t i = buffer.size() - 1; i >= 0 && std::isspace(buffer[i]); --i) {
+    buffer.erase(buffer.begin() + i);
+  }
+
+  // Remove other characters
+  for (uint64_t i = 0; i < buffer.size(); i += 1) {
+    if ((type & PreprocessType::IgnoreCase) && 'A' <= buffer[i] &&
+        buffer[i] <= 'Z') {
+      buffer[i] |= 0x20;
+    } else if (((type & PreprocessType::IgnoreWhitespace) &&
+                std::isspace(buffer[i])) ||
+               ((type & PreprocessType::IgnorePunctuation) &&
+                std::ispunct(buffer[i]))) {
+      buffer.erase(buffer.begin() + i);
+      --i;
+    }
+  }
+
+  return std::string{buffer.begin(), buffer.end()};
+}
+}; // namespace framework2110
