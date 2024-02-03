@@ -8,6 +8,8 @@
 #include "common.h"
 #include "console_printer.h"
 #include "framework2110.h"
+#include "null_printer.h"
+#include "printer.h"
 using json = nlohmann::json;
 
 int MAX_FAILURES = 8;
@@ -75,18 +77,25 @@ int main(int argc, char *argv[]) {
       std::cout
           << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
       std::cout << "  --ignore-privilege     Ignore access violations\n";
-      std::cout << "  --tester-verbose       Output tester messages\n";
+      std::cout << "  --tester-verbose       Output debug messages\n";
       std::cout << "  --seed=N               Optional seed for randomization\n";
       std::cout << "  --test-filter=TEST     Only run TEST (can be repeated)\n";
       return 0;
     }
   }
 
-  lc3::ConsolePrinter asm_printer;
-  lc3::as assembler(asm_printer,
+  lc3::utils::IPrinter *asm_printer;
+  if (args.json_output) {
+    // suppress all assembler output if outputting json into stdout
+    asm_printer = new lc3::NullPrinter();
+  } else {
+    asm_printer = new lc3::ConsolePrinter();
+  }
+
+  lc3::as assembler(*asm_printer,
                     args.asm_print_level_override ? args.asm_print_level : 0,
                     false);
-  lc3::conv converter(asm_printer,
+  lc3::conv converter(*asm_printer,
                       args.asm_print_level_override ? args.asm_print_level : 0);
   lc3::core::SymbolTable symbol_table;
 
