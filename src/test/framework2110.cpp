@@ -6,10 +6,7 @@
 #include <sstream>
 
 #include "common.h"
-#include "console_printer.h"
 #include "framework2110.h"
-#include "null_printer.h"
-#include "printer.h"
 using json = nlohmann::json;
 
 int MAX_FAILURES = 8;
@@ -84,18 +81,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  lc3::utils::IPrinter *asm_printer;
-  if (args.json_output) {
-    // suppress all assembler output if outputting json into stdout
-    asm_printer = new lc3::NullPrinter();
-  } else {
-    asm_printer = new lc3::ConsolePrinter();
-  }
+  // suppress all assembler output if outputting json into stdout
+  BufferedPrinter asm_printer = BufferedPrinter(!args.json_output);
 
-  lc3::as assembler(*asm_printer,
+  lc3::as assembler(asm_printer,
                     args.asm_print_level_override ? args.asm_print_level : 0,
                     false);
-  lc3::conv converter(*asm_printer,
+  lc3::conv converter(asm_printer,
                       args.asm_print_level_override ? args.asm_print_level : 0);
   lc3::core::SymbolTable symbol_table;
 
@@ -130,8 +122,20 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (obj_filenames.size() == 0) {
-    return 1;
+  if (obj_filenames.size() == 0 || !valid_program) {
+    if (args.json_output) {
+      // we will insert the assembler output into the `error` key of the stdout
+      // json if assembler fails at something
+      std::ostringstream asm_printer_output;
+      std::vector<char> buffer = asm_printer.getBuffer();
+      for (auto it = buffer.begin(); it != buffer.end(); it++)
+        asm_printer_output << *it;
+      json out = {{"error", asm_printer_output.str()}};
+      std::cout << out.dump(2, ' ', true) << std::endl;
+      return 0;
+    } else {
+      return 1;
+    }
   }
 
   if (valid_program) {
