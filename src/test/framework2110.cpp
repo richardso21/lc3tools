@@ -312,7 +312,8 @@ void Tester::printResults() {
     std::cout << test_result.output;
     auto error = test_result.error;
     if (error) {
-      std::cout << error->label << ":\n" << error->message << std::endl;
+      std::cout << "ERROR: " << error->label << ":\n"
+                << error->message << std::endl;
       continue;
     }
     auto parts = test_result.parts;
@@ -337,6 +338,8 @@ void Tester::printJson() {
     test_result_json["seed"] = test_result.seed;
     test_result_json["output"] = test_result.output;
 
+    // if there is an error, report it as the single failure and test
+    // so that no points will be awarded
     if (test_result.error) {
       json e = {
           {"label", test_result.error->label},
