@@ -16,8 +16,6 @@
 #include "utils.h"
 #include "tokenizer.h"
 
-static constexpr uint32_t INST_NAME_CLOSENESS = 2;
-
 std::pair<std::shared_ptr<std::stringstream>, lc3::core::SymbolTable>
 lc3::core::Assembler::assemble(std::istream & buffer)
 {
@@ -145,8 +143,7 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
                 operand_start_idx = 1;
             } else {
                 // If the token is not a pseudo-op, it could be either a label or an instruction.
-                uint32_t dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[0].str);
-                if(dist_from_inst_name == 0) {
+                if(encoder.isStringInstructionName(tokens[0].str)) {
                     // The token has been identified to match a valid instruction string, but don't be too hasty
                     // in marking it as an instruction yet.
                     if(tokens.size() > 1 && tokens[1].type == Token::Type::STRING) {
@@ -178,50 +175,26 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
                                 ret.base = StatementPiece{tokens[1], StatementPiece::Type::PSEUDO};
                                 operand_start_idx = 2;
                             } else if(encoder.isStringValidReg(tokens[1].str)) {
-                                // If the following token is a register, assume the user meant to type an instruction...
-                                // unless the distance from any valid instruction is too large.
-                                if(dist_from_inst_name < INST_NAME_CLOSENESS) {
-                                    ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
-                                    operand_start_idx = 1;
+                                // If the following token is a register, assume the user meant to type an instruction
+                                ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
+                                operand_start_idx = 1;
+                            } else {
+                                // If the following token is a string that was not identified as a pseudo-op or register,
+                                // then treat it as `LABEL inst' if the first operand is a valid instruction. Otherwise
+                                // conservatively mark as an instruction.
+                                if(encoder.isStringInstructionName(tokens[1].str)) {
+                                    ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
+                                    ret.base = StatementPiece{tokens[1], StatementPiece::Type::INST};
+                                    operand_start_idx = 2;
                                 } else {
                                     ret.label = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                     operand_start_idx = 1;
                                 }
-                            } else {
-                                // If the following token is a string that was not identified as a pseudo-op or register,
-                                // compare to see which token has the closer distance to a valid instruction. Even then,
-                                // only mark as an instruction if the distance is close enough to a valid instruction.
-                                uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(
-                                    tokens[1].str);
-                                if(next_dist_from_inst_name < dist_from_inst_name) {
-                                    if(next_dist_from_inst_name < INST_NAME_CLOSENESS) {
-                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
-                                        ret.base = StatementPiece{tokens[1], StatementPiece::Type::INST};
-                                        operand_start_idx = 2;
-                                    } else {
-                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
-                                        operand_start_idx = 1;
-                                    }
-                                } else {
-                                    if(dist_from_inst_name < INST_NAME_CLOSENESS) {
-                                        ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
-                                        operand_start_idx = 1;
-                                    } else {
-                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
-                                        operand_start_idx = 1;
-                                    }
-                                }
                             }
                         } else {
-                            // If the following token is a number, assume the user meant to type an instruction...
-                            // unless the distance from any valid instruction is too large.
-                            if(dist_from_inst_name < INST_NAME_CLOSENESS) {
-                                ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
-                                operand_start_idx = 1;
-                            } else {
-                                ret.label = StatementPiece{tokens[0], StatementPiece::Type::INST};
-                                operand_start_idx = 1;
-                            }
+                            // If the following token is a number, assume the user meant to type an instruction
+                            ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
+                            operand_start_idx = 1;
                         }
                     } else {
                         // If there are no more tokens on the line, just assume the user typed in a label rather than a
@@ -464,7 +437,7 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                         continue;
                     }
 
-                    if(encoder.getDistanceToNearestInstructionName(statement.label->str) == 0) {
+                    if(encoder.isStringInstructionName(statement.label->str)) {
                         logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
                             "label cannot be an instruction");
                         logger.newline();

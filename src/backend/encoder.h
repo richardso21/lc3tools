@@ -23,6 +23,7 @@ namespace asmbl
 
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;
+        bool isStringInstructionName(std::string const & name) const;
         bool isPseudo(Statement const & statement) const;
         bool isInst(Statement const & statement) const;
         bool isValidPseudoOrig(Statement const & statement, bool log_enable = false) const;
@@ -32,8 +33,6 @@ namespace asmbl
         bool isValidPseudoBlock(Statement const & statement, bool log_enable = false) const;
         bool isValidPseudoString(Statement const & statement, bool log_enable = false) const;
         bool isValidPseudoEnd(Statement const & statement, bool log_enable = false) const;
-
-        uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
 
         bool validatePseudo(Statement const & statement, SymbolTable const & symbols) const;
         optional<PIInstruction> validateInstruction(Statement const & statement) const;
@@ -56,9 +55,6 @@ namespace asmbl
             std::vector<StatementPiece::Type> const & valid_types, uint32_t operand_count, bool log_enable) const;
 
         std::map<std::string, std::vector<PIInstruction>> instructions_by_name;
-
-        uint32_t levDistance(std::string const & a, std::string const & b) const;
-        uint32_t levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
     };
 };
 };
