@@ -239,6 +239,8 @@ void Tester::testSingle(TestCase const &test) {
 
   try {
     test.test_func(simulator, *this);
+  } catch (Tester_error &te) {
+    te.report(*this);
   } catch (std::exception &e) {
     error("Test case ran into exception", e.what());
     return;

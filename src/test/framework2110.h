@@ -154,6 +154,14 @@ private:
   // friend int framework2110::main(int argc, char *argv[]);
 };
 
+class Tester_error final {
+  std::string lbl, msg;
+
+public:
+  Tester_error(std::string l, std::string m) : lbl{l}, msg{m} {}
+  void report(Tester &tester) const noexcept { tester.error(lbl, msg); }
+};
+
 class Quoted {
   const std::string &str;
 

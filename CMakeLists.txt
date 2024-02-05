@@ -14,7 +14,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
-option(BUILD_SAMPLES "Build sample testers." ON)
+option(BUILD_SAMPLES "Build sample testers." OFF)
 
 # set build flags
 if(NOT DEFINED MSVC)

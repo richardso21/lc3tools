@@ -25,6 +25,5 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     add_executable(${TEST_NAME} ${TEST_SOURCE} $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:framework>)
     target_include_directories(${TEST_NAME} PUBLIC .)
     target_link_libraries(${TEST_NAME} lc3core)
-    # target_link_libraries(${TEST_NAME} PRIVATE nlohmann_json::nlohmann_json)
 endforeach()
 
