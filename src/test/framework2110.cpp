@@ -485,4 +485,55 @@ std::string Tester::getPreprocessedString(std::string const &str,
 
   return std::string{buffer.begin(), buffer.end()};
 }
+
+void Tester::write_mem_at_symbol(const std::string &symbol, std::uint16_t val) {
+  const auto &st = getSymbolTable();
+  const auto symbol_addr = st.find(symbol);
+  if (symbol_addr == st.end())
+    throw Tester_error{"Checking address of " + symbol + " in symbol table",
+                       "There is no " + symbol + " label in the code."};
+  simulator->writeMem(symbol_addr->second, val);
+}
+
+std::uint16_t Tester::read_mem_at_symbol(const std::string &symbol) {
+  const auto &st = getSymbolTable();
+  const auto symbol_addr = st.find(symbol);
+  if (symbol_addr == st.end())
+    throw Tester_error{"Checking address of " + symbol + " in symbol table",
+                       "There is no " + symbol + " label in the code."};
+  return simulator->readMem(symbol_addr->second);
+}
+
+std::string Tester::read_string(std::uint16_t addr) {
+  std::string str{};
+  const int max_chars = 100;
+  for (; str.size() < max_chars && simulator->readMem(addr); ++addr) {
+    auto c = simulator->readMem(addr);
+    if (c > 127)
+      throw Tester_error("Invalid string read",
+                         (std::ostringstream{}
+                          << "Character at address " << std::showbase
+                          << std::hex << (addr - 1) << " is invalid (>127)")
+                             .str());
+    str.push_back(c);
+  }
+  return str;
+}
+
+// Overload for specified length
+std::string Tester::read_string(std::uint16_t addr, std::size_t len) {
+  std::string str{};
+  for (std::size_t i = 0; i != len; ++i) {
+    auto c = simulator->readMem(addr++);
+    if (c > 127)
+      throw Tester_error("Invalid string read",
+                         (std::ostringstream{}
+                          << "Character at address " << std::showbase
+                          << std::hex << (addr - 1) << " is invalid (>127)")
+                             .str());
+    str.push_back(c);
+  }
+  return str;
+}
+
 }; // namespace framework2110

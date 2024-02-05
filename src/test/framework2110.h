@@ -141,6 +141,12 @@ public:
     return symbol_table;
   }
 
+  void write_mem_at_symbol(const std::string &symbol, std::uint16_t val);
+  std::uint16_t read_mem_at_symbol(const std::string &symbol);
+
+  std::string read_string(std::uint16_t addr);
+  std::string read_string(std::uint16_t addr, std::size_t len);
+
 private:
   void setSymbolTable(lc3::core::SymbolTable const &symbol_table) {
     this->symbol_table = symbol_table;
@@ -148,13 +154,34 @@ private:
   // friend int framework2110::main(int argc, char *argv[]);
 };
 
-class Tester_error final {
-  std::string lbl, msg;
+class Quoted {
+  const std::string &str;
 
 public:
-  Tester_error(std::string l, std::string m) : lbl{l}, msg{m} {}
-  void report(Tester &tester) const noexcept { tester.error(lbl, msg); }
+  Quoted(const std::string &s) : str{s} {}
+
+  friend inline std::ostream &operator<<(std::ostream &os, Quoted q) {
+    os << '"';
+    for (char c : q.str)
+      if (c == '\n')
+        os << "\\n";
+      else if (c < ' ' || c >= 127) {
+        auto flags = os.flags();
+        // print c in octal
+        os << '\\' << std::noshowbase << std::oct
+           << int{static_cast<unsigned char>(c)};
+        os.flags(flags);
+      } else
+        os << c;
+    os << '"';
+    return os;
+  }
 };
+
+// Allows creation of strings from character arrays with embedded \0s.
+template <std::size_t N> inline std::string make_string(const char (&arr)[N]) {
+  return {arr, N - 1};
+}
 
 int main(int argc, char *argv[]);
 }; // namespace framework2110
