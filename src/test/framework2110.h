@@ -24,13 +24,9 @@ extern std::function<void(lc3::sim &)> testTeardown;
 struct TestCase {
   std::string name;
   test_func_t test_func;
-  // double points;
   bool randomize;
 
   TestCase(std::string const &name, test_func_t test_func, bool randomize);
-
-  // TestCase(std::string const &name, test_func_t test_func, double points,
-  //          bool randomize);
 };
 
 struct TestPart {
@@ -92,12 +88,6 @@ public:
          bool verbose, uint64_t seed,
          std::vector<std::string> const &obj_filenames);
 
-  // // overload for compatibility with v2 tester API
-  // void registerTest(std::string const &name, test_func_t test_func,
-  //                   double points, bool randomize) {
-  //   registerTest(name, test_func, randomize);
-  // };
-
   void registerTest(std::string const &name, test_func_t test_func,
                     bool randomize);
 
@@ -106,11 +96,6 @@ public:
               std::string (*print)(T));
   template <typename T>
   void verify(std::string const &label, T out, T expected);
-
-  // // overload for compatibility with v2 tester API
-  // void verify(std::string const &label, bool pass, double points) {
-  //   verify(label, pass);
-  // };
 
   void verify(std::string const &label, bool pass);
 
@@ -144,8 +129,8 @@ public:
   void write_mem_at_symbol(const std::string &symbol, std::uint16_t val);
   std::uint16_t read_mem_at_symbol(const std::string &symbol);
 
-  std::string read_string(std::uint16_t addr);
-  std::string read_string(std::uint16_t addr, std::size_t len);
+  std::string read_mem_string(std::uint16_t addr);
+  std::string read_mem_string(std::uint16_t addr, std::size_t len);
 
 private:
   void setSymbolTable(lc3::core::SymbolTable const &symbol_table) {

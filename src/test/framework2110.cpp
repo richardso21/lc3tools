@@ -506,7 +506,7 @@ std::uint16_t Tester::read_mem_at_symbol(const std::string &symbol) {
   return simulator->readMem(symbol_addr->second);
 }
 
-std::string Tester::read_string(std::uint16_t addr) {
+std::string Tester::read_mem_string(std::uint16_t addr) {
   std::string str{};
   const int max_chars = 100;
   for (; str.size() < max_chars && simulator->readMem(addr); ++addr) {
@@ -523,7 +523,7 @@ std::string Tester::read_string(std::uint16_t addr) {
 }
 
 // Overload for specified length
-std::string Tester::read_string(std::uint16_t addr, std::size_t len) {
+std::string Tester::read_mem_string(std::uint16_t addr, std::size_t len) {
   std::string str{};
   for (std::size_t i = 0; i != len; ++i) {
     auto c = simulator->readMem(addr++);
