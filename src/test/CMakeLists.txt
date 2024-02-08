@@ -1,3 +1,9 @@
+include(FetchContent)
+
+# cmake_policy(SET CMP0135 NEW)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 # find directories with includes
 include_directories(../backend)
 include_directories(../common)
@@ -5,6 +11,7 @@ include_directories(../common)
 # generate package
 file(GLOB FRAMEWORK_SOURCES *.cpp *.h)
 add_library(framework OBJECT ${FRAMEWORK_SOURCES})
+target_link_libraries(framework PRIVATE nlohmann_json::nlohmann_json)
 
 # get all necessary files
 if(BUILD_SAMPLES)

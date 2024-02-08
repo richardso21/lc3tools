@@ -29,7 +29,7 @@ namespace lc3
 
         sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
 
-        bool loadObjFile(std::string const & filename);
+        std::pair<bool, std::string> loadObjFile(std::string const & filename);
         void setup(void);
         void zeroState(void);
         uint64_t randomizeState(uint64_t seed = 0);

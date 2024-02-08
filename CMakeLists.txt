@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
 # set project name
+cmake_policy(SET CMP0048 NEW)
 project(lc3tools)
+
+# allow for clangd to pick up include headers in project
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # if no build mode is specified, pick release
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -10,7 +14,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
-option(BUILD_SAMPLES "Build sample testers." ON)
+option(BUILD_SAMPLES "Build sample testers." OFF)
 
 # set build flags
 if(NOT DEFINED MSVC)

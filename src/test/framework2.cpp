@@ -204,7 +204,8 @@ std::pair<double, double> Tester::testSingle(TestCase const & test)
     std::cout << std::endl;
 
     for(std::string const & obj_filename : obj_filenames) {
-        if(! simulator.loadObjFile(obj_filename)) {
+        auto res = simulator.loadObjFile(obj_filename);
+        if(!res.first) {
             std::cout << "Could not init simulator\n";
             return std::make_pair(0, test.points);
         }
