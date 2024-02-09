@@ -255,26 +255,6 @@ void Tester::testSingle(TestCase const &test) {
   this->simulator = nullptr;
 }
 
-template <typename T>
-void Tester::verify(std::string const &label, T out, T expected,
-                    bool (*comp)(T, T), std::string (*print)(T)) {
-  std::ostringstream message;
-  message << "Expected: " << print(expected) << ", Got: " << print(out)
-          << std::endl;
-  appendTestPart(label, message, comp(out, expected));
-}
-
-template <typename T>
-void Tester::verify(std::string const &label, T out, T expected) {
-  std::ostringstream message;
-  message << "Expected: " << expected << ", Got: " << out << std::endl;
-  appendTestPart(label, message, out == expected);
-}
-
-void Tester::verify(std::string const &label, bool pass) {
-  appendTestPart(label, "", pass);
-}
-
 void Tester::appendTestPart(std::string const &label,
                             std::string const &message, bool pass) {
   TestPart *test_part = new TestPart{};
