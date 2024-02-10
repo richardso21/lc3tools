@@ -324,7 +324,7 @@ void Tester::printJson() {
     // so that no points will be awarded
     if (test_result.error) {
       json e = {
-          {"label", test_result.error->label},
+          {"displayName", test_result.error->label},
           {"message", test_result.error->message},
       };
       partial_fails.push_back(e);
@@ -347,7 +347,7 @@ void Tester::printJson() {
           continue;
         auto part = parts.at(i);
         json part_json = {
-            {"label", part->label},
+            {"displayName", part->label},
             {"message", part->message},
         };
         partial_fails.push_back(part_json);
