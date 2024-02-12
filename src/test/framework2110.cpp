@@ -167,8 +167,8 @@ int main(int argc, char *argv[]) {
 }
 
 TestCase::TestCase(std::string const &name, test_func_t test_func,
-                   bool randomize)
-    : name(name), test_func(test_func), randomize(randomize) {}
+                   int randomizeSeed)
+    : name(name), test_func(test_func), randomizeSeed(randomizeSeed) {}
 
 Tester::Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
                bool verbose, uint64_t seed,
@@ -178,8 +178,8 @@ Tester::Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
       obj_filenames(obj_filenames) {}
 
 void Tester::registerTest(std::string const &name, test_func_t test_func,
-                          bool randomize) {
-  tests.emplace_back(name, test_func, randomize);
+                          int randomizeSeed) {
+  tests.emplace_back(name, test_func, randomizeSeed);
 }
 
 void Tester::testAll(void) {
@@ -212,14 +212,16 @@ void Tester::testSingle(TestCase const &test) {
 
   curr_test_result.test_name = test.name;
 
-  if (test.randomize) {
+  // seed cli arg >> test.randomizeSeed
+  if (test.randomizeSeed >= 0) {
     if (seed == 0) {
-      seed = simulator.randomizeState();
+      seed = simulator.randomizeState(test.randomizeSeed);
     } else {
       simulator.randomizeState(seed);
     }
     curr_test_result.seed = seed;
   } else {
+    // if test.randomizeSeed is negative, don't randomize
     curr_test_result.seed = -1;
   }
 

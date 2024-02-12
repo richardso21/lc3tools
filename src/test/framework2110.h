@@ -24,9 +24,9 @@ extern std::function<void(lc3::sim &)> testTeardown;
 struct TestCase {
   std::string name;
   test_func_t test_func;
-  bool randomize;
+  int randomizeSeed;
 
-  TestCase(std::string const &name, test_func_t test_func, bool randomize);
+  TestCase(std::string const &name, test_func_t test_func, int randomizeSeed);
 };
 
 struct TestPart {
@@ -89,7 +89,7 @@ public:
          std::vector<std::string> const &obj_filenames);
 
   void registerTest(std::string const &name, test_func_t test_func,
-                    bool randomize);
+                    int randomizeSeed);
 
   template <typename T>
   void verify(std::string const &label, T out, T expected, bool (*comp)(T, T),
