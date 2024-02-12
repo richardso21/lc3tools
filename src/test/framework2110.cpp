@@ -474,8 +474,8 @@ void Tester::write_mem_at_symbol(const std::string &symbol, std::uint16_t val) {
   const auto &st = getSymbolTable();
   const auto symbol_addr = st.find(symbol);
   if (symbol_addr == st.end())
-    throw Tester_error{"Checking address of " + symbol + " in symbol table",
-                       "There is no " + symbol + " label in the code."};
+    throw Tester_error{"Checking address of '" + symbol + "' in symbol table",
+                       "There is no '" + symbol + "' label in the code."};
   simulator->writeMem(symbol_addr->second, val);
 }
 
@@ -483,8 +483,8 @@ std::uint16_t Tester::read_mem_at_symbol(const std::string &symbol) {
   const auto &st = getSymbolTable();
   const auto symbol_addr = st.find(symbol);
   if (symbol_addr == st.end())
-    throw Tester_error{"Checking address of " + symbol + " in symbol table",
-                       "There is no " + symbol + " label in the code."};
+    throw Tester_error{"Checking address of '" + symbol + "' in symbol table",
+                       "There is no '" + symbol + "' label in the code."};
   return simulator->readMem(symbol_addr->second);
 }
 
