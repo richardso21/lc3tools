@@ -9,6 +9,9 @@
     #include <termios.h>
     #include <unistd.h>
 #endif
+#if defined(__EMSCRIPTEN__)
+    #include <sys/time.h>
+#endif
 
 #include "console_inputter.h"
 

@@ -1,13 +1,13 @@
 {
   "name": "LC3Tools",
   "version": "2.0.2",
-  "author": "Chirag Sakhuja <chirag.sakhuja@utexas.edu>",
+  "author": "CS 2110",
   "description": "LC3Tools frontend",
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chiragsakhuja/lc3tools.git"
+    "url": "https://github.com/gt-cs2110/lc3tools.git"
   },
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
@@ -68,7 +68,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "chiragsakhuja",
+      "owner": "gt-cs2110",
       "repo": "lc3tools"
     }
   },
