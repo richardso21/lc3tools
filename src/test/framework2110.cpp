@@ -345,8 +345,10 @@ void Tester::printJson() {
       int i = 0;
       int c = 0;
       while (i < parts.size() && c < MAX_FAILURES) {
-        if (test_result.fail_inds.count(i) == 0)
+        if (test_result.fail_inds.count(i) == 0) {
+          i++;
           continue;
+        }
         auto part = parts.at(i);
         json part_json = {
             {"displayName", part->label},
