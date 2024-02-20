@@ -137,8 +137,12 @@ public:
     return symbol_table;
   }
 
+  uint16_t get_symbol_location(const std::string &symbol);
+
   void write_mem_at_symbol(const std::string &symbol, std::uint16_t val);
   std::uint16_t read_mem_at_symbol(const std::string &symbol);
+  void write_string_at_symbol(const std::string &symbol,
+                              const std::string &str);
 
   std::string read_mem_string(std::uint16_t addr);
   std::string read_mem_string(std::uint16_t addr, std::size_t len);

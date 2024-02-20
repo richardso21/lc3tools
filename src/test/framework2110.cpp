@@ -2,6 +2,7 @@
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or
  * distribution without the prior written consent of McGraw-Hill Education.
  */
+#include <cstdint>
 #include <nlohmann/json.hpp>
 #include <sstream>
 
@@ -345,8 +346,10 @@ void Tester::printJson() {
       int i = 0;
       int c = 0;
       while (i < parts.size() && c < MAX_FAILURES) {
-        if (test_result.fail_inds.count(i) == 0)
+        if (test_result.fail_inds.count(i) == 0) {
+          i++;
           continue;
+        }
         auto part = parts.at(i);
         json part_json = {
             {"displayName", part->label},
@@ -470,22 +473,28 @@ std::string Tester::getPreprocessedString(std::string const &str,
   return std::string{buffer.begin(), buffer.end()};
 }
 
-void Tester::write_mem_at_symbol(const std::string &symbol, std::uint16_t val) {
-  const auto &st = getSymbolTable();
-  const auto symbol_addr = st.find(symbol);
-  if (symbol_addr == st.end())
+uint16_t Tester::get_symbol_location(const std::string &symbol) {
+  const auto symbol_addr = symbol_table.find(symbol);
+  if (symbol_addr == symbol_table.end())
     throw Tester_error{"Checking address of " + symbol + " in symbol table",
                        "There is no " + symbol + " label in the code."};
-  simulator->writeMem(symbol_addr->second, val);
+  return symbol_addr->second;
+}
+
+void Tester::write_mem_at_symbol(const std::string &symbol, std::uint16_t val) {
+  const auto symbol_addr = get_symbol_location(symbol);
+  simulator->writeMem(symbol_addr, val);
 }
 
 std::uint16_t Tester::read_mem_at_symbol(const std::string &symbol) {
-  const auto &st = getSymbolTable();
-  const auto symbol_addr = st.find(symbol);
-  if (symbol_addr == st.end())
-    throw Tester_error{"Checking address of " + symbol + " in symbol table",
-                       "There is no " + symbol + " label in the code."};
-  return simulator->readMem(symbol_addr->second);
+  const auto symbol_addr = get_symbol_location(symbol);
+  return simulator->readMem(symbol_addr);
+}
+
+void Tester::write_string_at_symbol(const std::string &symbol,
+                                    const std::string &str) {
+  const auto symbol_addr = get_symbol_location(symbol);
+  return simulator->writeStringMem(symbol_addr, str);
 }
 
 std::string Tester::read_mem_string(std::uint16_t addr) {
