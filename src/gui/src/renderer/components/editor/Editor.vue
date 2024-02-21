@@ -202,6 +202,7 @@ export default {
     build() {
       // save the file if it hasn't been saved
       if (this.editor.content_changed) {
+        this.editor.content_changed = false;
         this.saveFile();
       }
       // show console when assembling
