@@ -120,6 +120,7 @@
                             slot="input"
                             label="Hex Value"
                             v-bind:value="toHex(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.hex,
@@ -146,6 +147,7 @@
                             slot="input"
                             label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.dec,
@@ -275,6 +277,7 @@
                             slot="input"
                             label="Hex Value"
                             v-bind:value="toHex(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.hex,
@@ -301,6 +304,7 @@
                             slot="input"
                             label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.dec,
