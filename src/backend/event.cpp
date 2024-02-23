@@ -149,6 +149,9 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
             break;
         }
 
+        // enforce that all code should start at user space (0x3000) unless the first .orig is at a higher address
+        state.writeResetPC(USER_START);
+
         if(mem.isOrig()) {
             if (!reset_pc_set) {
                 if (mem.getValue() >= USER_START) {
