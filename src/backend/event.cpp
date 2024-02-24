@@ -105,7 +105,7 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
 
     uint32_t fill_pc = 0;
     uint32_t offset = 0;
-    bool first_orig_set = false;
+    bool reset_pc_set = false;
 
     // Verify header.
     std::string expected_header = lc3::utils::getMagicHeader();
@@ -149,10 +149,17 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
             break;
         }
 
-        // enforce that all code should start at user space (0x3000)
+        // enforce that all code should start at user space (0x3000) unless the first .orig is at a higher address
         state.writeResetPC(USER_START);
 
         if(mem.isOrig()) {
+            if (!reset_pc_set) {
+                if (mem.getValue() >= USER_START) {
+                    // if orig is not at user space, then most likely an interrupt or OS is being loaded
+                    state.writeResetPC(mem.getValue());
+                    reset_pc_set = true;
+                }
+            }
             fill_pc = mem.getValue();
             offset = 0;
         } else {

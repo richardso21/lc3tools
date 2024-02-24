@@ -224,6 +224,13 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
                         // remove the comma
                         regToken.str = regToken.str.substr(0, regToken.str.size() - 1);
                         regToken.len--;
+                    } else {
+                      if (regToken.str.back() == ',') {
+                        // signal an error if comma is present in the last token
+                        logger.asmPrintf(PrintType::P_ERROR, ret, "bad statement format (missing/too many commas?)");
+                        success = false;
+                        break;
+                      }
                     }
                     ret.operands.emplace_back(regToken, StatementPiece::Type::REG);
                 } else {

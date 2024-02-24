@@ -107,7 +107,7 @@
                 May result in inconsistency with the grader.
               </p>
               <v-layout row>
-                <v-flex grow><h4>Issues? Post on CS 2110 Piazza!</h4></v-flex>
+                <v-flex grow><h4>Issues? Post on CS 2110 Ed/Piazza!</h4></v-flex>
               </v-layout>
             </v-container>
           </v-card>

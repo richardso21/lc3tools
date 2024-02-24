@@ -120,6 +120,7 @@
                             slot="input"
                             label="Hex Value"
                             v-bind:value="toHex(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.hex,
@@ -146,6 +147,7 @@
                             slot="input"
                             label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'reg', [
                                 rules.dec,
@@ -275,6 +277,7 @@
                             slot="input"
                             label="Hex Value"
                             v-bind:value="toHex(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.hex,
@@ -301,6 +304,7 @@
                             slot="input"
                             label="Decimal Value"
                             v-bind:value="toDec(props.item.value)"
+                            @focus="$event.target.select()"
                             @change="
                               setDataValue($event, props.item, 'mem', [
                                 rules.dec,
@@ -475,22 +479,13 @@ export default {
     });
   },
   mounted() {
-    for (
-      let i = 0;
-      i < Math.floor(this.$refs.memView.clientHeight / 24) - 5;
-      i++
-    ) {
-      this.mem_view.data.push({
-        addr: 0,
-        value: 0,
-        line: "",
-        label: "",
-        flash: 0,
-        updated: 0
-      });
-    }
-    this.updateUI();
-    this.jumpToPC(true);
+    this.refreshMemoryPanel();
+  },
+  created() {
+    window.addEventListener("resize", this.refreshMemoryPanel);
+  },
+  destroyed() {
+    window.removeEventListener("resize", this.refreshMemoryPanel);
   },
   activated() {
     let asm_file_name = this.$store.getters.activeFilePath;
@@ -508,6 +503,25 @@ export default {
     }
   },
   methods: {
+    refreshMemoryPanel() {
+      this.mem_view.data = [];
+      for (
+        let i = 0;
+        i < Math.floor((window.innerHeight - 140) / 24) - 4;
+        i++
+      ) {
+        this.mem_view.data.push({
+          addr: 0,
+          value: 0,
+          line: "",
+          label: "",
+          flash: 0,
+          updated: 0
+        });
+      }
+      this.updateUI();
+      this.jumpToPC(true);
+    },
     openFile(path) {
       // Todo: try catch around this
       let selectedFiles = [path];
