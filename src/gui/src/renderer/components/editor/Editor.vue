@@ -5,12 +5,12 @@
     <v-navigation-drawer fixed mini-variant permanent app>
       <v-list two-line>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="saveFileAs()">
+          <v-list-tile slot="activator" @click="openFile()">
             <v-list-tile-action>
-              <v-icon large>note_add</v-icon>
+              <v-icon large>folder_open</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Save File As</span>
+          <span>Open File</span>
         </v-tooltip>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="saveFile()">
@@ -26,12 +26,12 @@
           <span>Save File</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="openFile()">
+          <v-list-tile slot="activator" @click="saveFileAs()">
             <v-list-tile-action>
-              <v-icon large>folder_open</v-icon>
+              <v-icon large>note_add</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Open File</span>
+          <span>Save File As</span>
         </v-tooltip>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="build()">
