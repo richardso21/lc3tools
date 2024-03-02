@@ -63,6 +63,20 @@
                 </v-flex>
               </v-layout>
               <v-layout row>
+                <v-flex grow><h3>Autocomplete</h3></v-flex>
+                <v-flex shrink>
+                  <v-radio-group
+                    @change="saveSettings('autocomplete')"
+                    v-model="settings.autocomplete"
+                    row
+                  >
+                    <v-radio label="None" value="none"></v-radio>
+                    <v-radio label="Basic" value="basic"></v-radio>
+                    <v-radio label="Full" value="full"></v-radio>
+                  </v-radio-group>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
                 <v-flex grow><h3>Stop execution on reaching HALT</h3></v-flex>
                 <v-flex shrink>
                   <v-switch
@@ -225,7 +239,8 @@ export default {
         liberal_asm: false,
         ignore_update: false,
         run_until_halt: false,
-        clear_out_on_reload: true
+        clear_out_on_reload: true,
+		autocomplete: "full"
       }
     };
   },
@@ -299,6 +314,7 @@ export default {
         lc3.SetEnableLiberalAsm(this.settings.liberal_asm);
         this.$store.commit("setTheme", this.settings.theme);
         this.$store.commit("setNumberType", this.settings.numbers);
+        this.$store.commit("setAutocomplete", this.settings.autocomplete);
         this.$store.commit("setEditorBinding", this.settings.editor_binding);
         this.$store.commit(
           "setIgnorePrivilege",
@@ -314,6 +330,8 @@ export default {
         this.$store.commit("setTheme", this.settings.theme);
       } else if (setting === "numbers") {
         this.$store.commit("setNumberType", this.settings.numbers);
+      } else if (setting === "autocomplete") {
+        this.$store.commit("setAutocomplete", this.settings.autocomplete);
       } else if (setting === "editorBinding") {
         this.$store.commit("setEditorBinding", this.settings.editor_binding);
       } else if (setting === "privilege") {
