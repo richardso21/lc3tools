@@ -205,13 +205,6 @@ lc3::core::asmbl::Statement lc3::core::Assembler::buildStatement(
             }
         }
     }
-    // remove label from line if it is there
-    // we'll now provide the GUI the symbol table to display labels in a separate column
-    if (ret.label.isValid()) {
-        std::string label_str = ret.label->str;
-        int labelInd = ret.line.find_first_of(label_str);
-        ret.line.erase(labelInd, labelInd + label_str.length());
-    }
 
     std::stringstream statement_str;
     ::operator<<(statement_str, ret);
@@ -461,17 +454,26 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
         if(statement.base) {
             std::stringstream msg;
             ::operator<<(msg, statement) << " := ";
+            std::string line = statement.line;
+
+            // remove label from line if it is there
+            // we'll now provide the GUI the symbol table to display labels in a separate column
+            if (statement.label) {
+                std::string label_str = statement.label->str;
+                int labelInd = statement.line.find_first_of(label_str);
+                line.erase(labelInd, labelInd + label_str.length());
+            }
 
             if(encoder.isPseudo(statement)) {
                 bool valid = encoder.validatePseudo(statement, symbols);
                 if(valid) {
                     if(encoder.isValidPseudoOrig(statement)) {
                         uint32_t address = encoder.getPseudoOrig(statement);
-                        ret.emplace_back(address, statement.line, true);
+                        ret.emplace_back(address, line, true);
                         msg << utils::ssprintf("(orig) 0x%0.4x", address);
                     } else if(encoder.isValidPseudoFill(statement, symbols)) {
                         uint32_t value = encoder.getPseudoFill(statement, symbols);
-                        ret.emplace_back(value, statement.line, false);
+                        ret.emplace_back(value, line, false);
                         msg << utils::ssprintf("0x%0.4x", value);
                     } else if(encoder.isValidPseudoBlock(statement)) {
                         uint32_t size = encoder.getPseudoBlockSize(statement);
@@ -479,7 +481,7 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                         std::uniform_int_distribution<> distr(0, 0xFFFF); 
                         // .blkw should technically skip memory locations, but we'll fill with random data to mock that
                         for(uint32_t i = 0; i < size; i += 1) {
-                            ret.emplace_back(distr(rd), statement.line, false);
+                            ret.emplace_back(distr(rd), line, false);
                         }
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] skipped for .blkw", statement.pc, statement.pc + size - 1);
                     } else if(encoder.isValidPseudoString(statement)) {
@@ -487,7 +489,7 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                         for(char c : value) {
                             ret.emplace_back(c, std::string(1, c), false);
                         }
-                        ret.emplace_back(0, statement.line, false);
+                        ret.emplace_back(0, line, false);
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = \'%s\\0\'", statement.pc,
                             statement.pc + value.size(), value.c_str());
                     } else if(encoder.isValidPseudoEnd(statement)) {
