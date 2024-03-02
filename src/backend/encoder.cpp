@@ -37,10 +37,7 @@ bool Encoder::isStringValidReg(std::string const & search) const
 {
     std::string lower_search = search;
     std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
-    // reg string may also contain a comma left by the tokenizer
-    std::string lower_search_comma = search.substr(0, search.size() - 1);
-    std::transform(lower_search_comma.begin(), lower_search_comma.end(), lower_search_comma.begin(), ::tolower);
-    return regs.find(lower_search) != regs.end() || regs.find(lower_search_comma) != regs.end();
+    return regs.find(lower_search) != regs.end();
 }
 
 bool Encoder::isStringInstructionName(std::string const & name) const
