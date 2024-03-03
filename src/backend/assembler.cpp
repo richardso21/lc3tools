@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cctype>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <vector>
 #include <random>
@@ -132,6 +133,9 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
     //       easier to follow the flowchart.
     if(tokens.size() > 0) {
         ret.line = tokens[0].line;
+        ret.line.erase(0, ret.line.find_first_not_of(" \t")); // trim leading whitespace
+        ret.line.erase(ret.line.find_last_not_of(" \t") + 1); // trim trailing whitespace
+
         ret.row = tokens[0].row;
         uint32_t operand_start_idx = 0;
 
@@ -503,8 +507,8 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
             // we'll now provide the GUI the symbol table to display labels in a separate column
             if (statement.label) {
                 std::string label_str = statement.label->str;
-                int labelInd = statement.line.find_first_of(label_str);
-                line.erase(labelInd, labelInd + label_str.length());
+                int labelInd = line.find(label_str);
+                line.erase(labelInd, label_str.length());
             }
 
             if(encoder.isPseudo(statement)) {
@@ -558,7 +562,7 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                 if(candidate) {
                     optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
                     if(value) {
-                        ret.emplace_back(*value, statement.line, false);
+                        ret.emplace_back(*value, line, false);
                         msg << utils::ssprintf("0x%0.4x", *value);
                         valid = true;
                         logger.printf(PrintType::P_EXTRA, true, "  0x%0.4x", *value);
