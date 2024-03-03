@@ -40,8 +40,8 @@ namespace core
 
         asmbl::Encoder encoder;
 
-        std::vector<asmbl::Statement> buildStatements(std::istream & buffer);
-        asmbl::Statement buildStatement(std::vector<asmbl::Token> const & tokens);
+        std::pair<bool, std::vector<asmbl::Statement>> buildStatements(std::istream & buffer);
+        std::pair<bool, asmbl::Statement> buildStatement(std::vector<asmbl::Token> const & tokens);
         void setStatementPCField(std::vector<asmbl::Statement> & statements);
         std::pair<bool, SymbolTable> buildSymbolTable(std::vector<asmbl::Statement> const & statements);
         std::pair<bool, std::vector<MemLocation>> buildMachineCode(std::vector<asmbl::Statement> const & statements,
