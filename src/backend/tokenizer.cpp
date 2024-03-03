@@ -199,6 +199,8 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
     } catch(std::out_of_range const & e) {
         (void) e;
         return false;
+    } catch(...) { // somehow the above exception is not caught when building into a node module on macos
+        return false;
     }
 }
 
