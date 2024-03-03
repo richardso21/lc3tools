@@ -444,6 +444,13 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                         success = false;
                         continue;
                     }
+                    if(!encoder.isValidAlphaNumLabel(statement)) {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "label must be alphanumeric with the exception of `_` and `-`");
+                        logger.newline();
+                        success = false;
+                        continue;
+                    }
                 }
 
                 if(encoder.isStringValidReg(statement.label->str)) {

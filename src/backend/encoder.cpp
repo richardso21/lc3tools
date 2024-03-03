@@ -37,15 +37,29 @@ bool Encoder::isStringValidReg(std::string const & search) const
 {
     std::string lower_search = search;
     std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
-    // reg string may also contain a comma left by the tokenizer
-    std::string lower_search_comma = search.substr(0, search.size() - 1);
-    std::transform(lower_search_comma.begin(), lower_search_comma.end(), lower_search_comma.begin(), ::tolower);
-    return regs.find(lower_search) != regs.end() || regs.find(lower_search_comma) != regs.end();
+    try {
+      // reg string may also contain a comma left by the tokenizer
+      std::string lower_search_comma = search.substr(0, search.size() - 1);
+      std::transform(lower_search_comma.begin(), lower_search_comma.end(), lower_search_comma.begin(), ::tolower);
+      return regs.find(lower_search) != regs.end() || regs.find(lower_search_comma) != regs.end();
+    } catch (std::exception & e) { // defensive catch in case anything with search goes wrong
+        return false;
+    }
 }
 
 bool Encoder::isStringInstructionName(std::string const & name) const
 {
     return instructions_by_name.count(utils::toLower(name));
+}
+
+bool Encoder::isValidAlphaNumLabel(Statement const & statement) const
+{
+    for(char c : statement.label->str) {
+        if(! std::isalnum(c) && c != '_' && c != '-') {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool Encoder::isValidPseudoOrig(Statement const & statement, bool log_enable) const
