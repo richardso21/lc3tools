@@ -103,6 +103,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     // If we've made it here, we have a valid token. First find the length.
     uint32_t len = 0;
     bool found_string = false;
+    bool found_comment = false;
     if(line[col] == '"' && (col == 0 || line[col - 1] != '\\')) {
         // If token begins with an non-escaped quotation mark, the length goes on until the matching non-escaped
         // quotation mark (or EOL if non exists).
@@ -113,6 +114,11 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         found_string = true;
     } else {
         while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
+        if (line[col + len] == ';' && !found_string) {
+            // if we find a comment after an instruction without any whitespace, stop the token
+            found_comment = true;
+            break;
+        }
             len += 1;
         }
     }
@@ -133,6 +139,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     token.line = line;
 
     col += len + 1;
+    if (found_comment) col--; // don't skip the semicolon in the above case
 
     return *this;
 }
