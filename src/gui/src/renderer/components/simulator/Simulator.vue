@@ -357,13 +357,13 @@
                     }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToPrevPartMemView" slot="activator"
+                    <v-btn icon @click="() => {jumpToPartMemView(-5)}" slot="activator"
                       ><v-icon>arrow_back</v-icon></v-btn
                     >
                     <span>{{ toHex((mem_view.start - 5) & 0xffff) }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="jumpToNextPartMemView" slot="activator"
+                    <v-btn icon @click="() => {jumpToPartMemView(5)}" slot="activator"
                       ><v-icon>arrow_forward</v-icon></v-btn
                     >
                     <span>{{ toHex((mem_view.start + 5) & 0xffff) }}</span>
@@ -464,7 +464,7 @@ export default {
       },
       loadedSnackBar: false,
       jmp_to_loc_field: "",
-      scrollTicking: false
+      memScrollOffset: 0
     };
   },
   components: {},
@@ -508,16 +508,11 @@ export default {
   methods: {
     handleMemoryScroll(event) {
       event.preventDefault();
-      const direction = event.deltaY > 0; // true if scrolling down
-      window.requestAnimationFrame(() => {
-        if (direction) {
-          this.jumpToNextPartMemView();
-        } else {
-          this.jumpToPrevPartMemView();
-        }
-        this.scrollTicking = false;
-      });
-      this.scrollTicking = true;
+      this.memScrollOffset += event.deltaY;
+      if (Math.abs(this.memScrollOffset) > 20) {
+        this.jumpToPartMemView(Math.floor(this.memScrollOffset / 20));
+        this.memScrollOffset = 0;
+      }
     },
     refreshMemoryPanel() {
       this.mem_view.data = [];
@@ -810,16 +805,12 @@ export default {
       let new_start = this.mem_view.start - this.mem_view.data.length;
       this.jumpToMemView(new_start);
     },
-    jumpToPrevPartMemView() {
-      let new_start = this.mem_view.start - 5;
-      this.jumpToMemView(new_start);
-    },
     jumpToNextMemView() {
       let new_start = this.mem_view.start + this.mem_view.data.length;
       this.jumpToMemView(new_start);
     },
-    jumpToNextPartMemView() {
-      let new_start = this.mem_view.start + 5;
+    jumpToPartMemView(netLines) {
+      let new_start = this.mem_view.start + netLines;
       this.jumpToMemView(new_start);
     },
     jumpToPC(jump_if_in_view) {
