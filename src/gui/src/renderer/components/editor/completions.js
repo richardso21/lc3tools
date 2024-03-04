@@ -32,7 +32,7 @@ const instrs = [
   "STR",
   "TRAP"
 ];
-const instrAliases = ["HALT", "RET"];
+const instrAliases = ["HALT", "PUTS", "GETC", "RET"];
 const pseudoOps = ["orig", "end", "fill", "blkw", "stringz"];
 const keywordSet = new Set(
   [...instrs, ...instrAliases, ...regNames, ...pseudoOps].map(s =>
