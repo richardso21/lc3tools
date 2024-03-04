@@ -524,6 +524,12 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                         msg << utils::ssprintf("0x%0.4x", value);
                     } else if(encoder.isValidPseudoBlock(statement)) {
                         uint32_t size = encoder.getPseudoBlockSize(statement);
+                        // check if size overflows lc3 memory
+                        if (statement.pc + size > 0xFFFF) {
+                            logger.asmPrintf(PrintType::P_ERROR, statement, "block size overflows memory");
+                            logger.newline();
+                            success = false;
+                        }
                         std::random_device rd;
                         std::uniform_int_distribution<> distr(0, 0xFFFF); 
                         // .blkw should technically skip memory locations, but we'll fill with random data to mock that
