@@ -463,7 +463,8 @@ export default {
         }
       },
       loadedSnackBar: false,
-      jmp_to_loc_field: ""
+      jmp_to_loc_field: "",
+      scrollTicking: false
     };
   },
   components: {},
@@ -480,12 +481,14 @@ export default {
   },
   mounted() {
     this.refreshMemoryPanel();
+    this.$refs.memView.addEventListener("wheel", this.handleMemoryScroll);
   },
   created() {
     window.addEventListener("resize", this.refreshMemoryPanel);
   },
   destroyed() {
     window.removeEventListener("resize", this.refreshMemoryPanel);
+    this.$refs.memView.addEventListener("wheel", this.handleMemoryScroll);
   },
   activated() {
     let asm_file_name = this.$store.getters.activeFilePath;
@@ -503,6 +506,19 @@ export default {
     }
   },
   methods: {
+    handleMemoryScroll(event) {
+      event.preventDefault();
+      const direction = event.deltaY > 0; // true if scrolling down
+      window.requestAnimationFrame(() => {
+        if (direction) {
+          this.jumpToNextPartMemView();
+        } else {
+          this.jumpToPrevPartMemView();
+        }
+        this.scrollTicking = false;
+      });
+      this.scrollTicking = true;
+    },
     refreshMemoryPanel() {
       this.mem_view.data = [];
       for (
