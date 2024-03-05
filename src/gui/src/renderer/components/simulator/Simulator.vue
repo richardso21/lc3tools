@@ -357,13 +357,27 @@
                     }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="() => {jumpToPartMemView(-5)}" slot="activator"
+                    <v-btn
+                      icon
+                      @click="
+                        () => {
+                          jumpToPartMemView(-5);
+                        }
+                      "
+                      slot="activator"
                       ><v-icon>arrow_back</v-icon></v-btn
                     >
                     <span>{{ toHex((mem_view.start - 5) & 0xffff) }}</span>
                   </v-tooltip>
                   <v-tooltip top>
-                    <v-btn icon @click="() => {jumpToPartMemView(5)}" slot="activator"
+                    <v-btn
+                      icon
+                      @click="
+                        () => {
+                          jumpToPartMemView(5);
+                        }
+                      "
+                      slot="activator"
                       ><v-icon>arrow_forward</v-icon></v-btn
                     >
                     <span>{{ toHex((mem_view.start + 5) & 0xffff) }}</span>
