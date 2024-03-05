@@ -150,7 +150,11 @@ function generateCompletions(mode, doc, pos, prefix) {
   let firstToken = currTokens[0].toLowerCase();
 
   // check if first token is label
-  if (!keywordSet.has(firstToken) && firstToken !== ".") {
+  if (
+    !keywordSet.has(firstToken) &&
+    firstToken !== "." &&
+    !firstToken.startsWith("br")
+  ) {
     // if label is the only token, suggest instructions (labels shouldn't be attached to pseudo-ops)
     if (currTokens.length === 1) {
       return [...instrCompletions, ...instrAliasCompletions];
