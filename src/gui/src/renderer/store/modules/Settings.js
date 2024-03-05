@@ -7,6 +7,7 @@ const state = {
   ignore_update: false,
   run_until_halt: false,
   clear_out_on_reload: true,
+	autocomplete: 'full' // 'none' | 'basic' | 'full'
 };
 
 const mutations = {
@@ -34,6 +35,9 @@ const mutations = {
   setClearOutOnReload(state, setting) {
     state.clear_out_on_reload = setting;
   },
+  setAutocomplete(state, setting) {
+    state.autocomplete = setting;
+  },
 };
 
 const getters = {
@@ -45,6 +49,7 @@ const getters = {
   ignore_update: (state) => state.ignore_update,
   run_until_halt: (state) => state.run_until_halt,
   clear_out_on_reload: (state) => state.clear_out_on_reload,
+  autocomplete: (state) => state.autocomplete,
 };
 
 export default {
