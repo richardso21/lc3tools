@@ -53,7 +53,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         }
 
         col = 0;
-        row += 1;
+        row++;
 
         // Mark as done if we've reached EOF.
         if(getline(buffer, line).eof()) {
@@ -89,7 +89,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     // Ignore delimeters entirely.
     std::string delims = ": \t";
     while(col < line.size() && delims.find(line[col]) != std::string::npos) {
-        col += 1;
+        col++;
     }
 
     // If there's nothing left on this line, get a new line (but first return EOL).
@@ -103,19 +103,32 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     // If we've made it here, we have a valid token. First find the length.
     uint32_t len = 0;
     bool found_string = false;
+    bool found_comment = false;
+    bool argument_delim = false;
     if(line[col] == '"' && (col == 0 || line[col - 1] != '\\')) {
         // If token begins with an non-escaped quotation mark, the length goes on until the matching non-escaped
         // quotation mark (or EOL if non exists).
-        col += 1;    // Consume first non-escaped quotation mark.
+        col++;    // Consume first non-escaped quotation mark.
         while(col + len < line.size() && ! (line[col + len] == '"' && line[col + len - 1] != '\\')) {
-            len += 1;
+            len++;
         }
         found_string = true;
     } else {
         while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
-            len += 1;
+        if (line[col + len] == ';') {
+            // if we find a comment after an instruction without any whitespace, stop the token
+            found_comment = true;
+            break;
+        } else if (line[col + len] == ',') {
+            // also break if we find a comma, but still consume it with the current token
+            argument_delim = true;
+            len++;
+            break;
+        }
+            len++;
         }
     }
+
 
     // Attempt to convert token into numeric value. If possible, mark as NUM. Otherwise, mark as STRING.
     int32_t token_num_val = 0;
@@ -133,6 +146,10 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     token.line = line;
 
     col += len + 1;
+
+    // don't skip the semicolon in the above case (so we can catch the comment in the next `>>` call)...
+    // nor will we skip any character after the comma in case there isn't a space after it
+    if (found_comment || argument_delim) col--;
 
     return *this;
 }
@@ -181,6 +198,8 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
         return false;
     } catch(std::out_of_range const & e) {
         (void) e;
+        return false;
+    } catch(...) { // somehow the above exception is not caught when building into a node module on macos
         return false;
     }
 }

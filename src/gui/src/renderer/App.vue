@@ -121,7 +121,9 @@
                 May result in inconsistency with the grader.
               </p>
               <v-layout row>
-                <v-flex grow><h4>Issues? Post on CS 2110 Ed/Piazza!</h4></v-flex>
+                <v-flex grow
+                  ><h4>Issues? Post on CS 2110 Ed/Piazza!</h4></v-flex
+                >
               </v-layout>
             </v-container>
           </v-card>
@@ -238,9 +240,9 @@ export default {
         ignore_privilege: false,
         liberal_asm: false,
         ignore_update: false,
-        run_until_halt: false,
+        run_until_halt: true,
         clear_out_on_reload: true,
-		autocomplete: "full"
+        autocomplete: "full"
       }
     };
   },

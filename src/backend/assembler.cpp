@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cctype>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <vector>
 #include <random>
@@ -132,6 +133,9 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
     //       easier to follow the flowchart.
     if(tokens.size() > 0) {
         ret.line = tokens[0].line;
+        ret.line.erase(0, ret.line.find_first_not_of(" \t")); // trim leading whitespace
+        ret.line.erase(ret.line.find_last_not_of(" \t") + 1); // trim trailing whitespace
+
         ret.row = tokens[0].row;
         uint32_t operand_start_idx = 0;
 
@@ -240,13 +244,6 @@ std::pair<bool, lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatemen
                 ret.operands.emplace_back(tokens[i], StatementPiece::Type::NUM);
             }
         }
-    }
-    // remove label from line if it is there
-    // we'll now provide the GUI the symbol table to display labels in a separate column
-    if (ret.label.isValid()) {
-        std::string label_str = ret.label->str;
-        int labelInd = ret.line.find_first_of(label_str);
-        ret.line.erase(labelInd, labelInd + label_str.length());
     }
 
     std::stringstream statement_str;
@@ -451,6 +448,13 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                         success = false;
                         continue;
                     }
+                    if(!encoder.isValidAlphaNumLabel(statement)) {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "label must be alphanumeric with the exception of `_` and `-`");
+                        logger.newline();
+                        success = false;
+                        continue;
+                    }
                 }
 
                 if(encoder.isStringValidReg(statement.label->str)) {
@@ -497,25 +501,40 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
         if(statement.base) {
             std::stringstream msg;
             ::operator<<(msg, statement) << " := ";
+            std::string line = statement.line;
+
+            // remove label from line if it is there
+            // we'll now provide the GUI the symbol table to display labels in a separate column
+            if (statement.label) {
+                std::string label_str = statement.label->str;
+                int labelInd = line.find(label_str);
+                line.erase(labelInd, label_str.length());
+            }
 
             if(encoder.isPseudo(statement)) {
                 bool valid = encoder.validatePseudo(statement, symbols);
                 if(valid) {
                     if(encoder.isValidPseudoOrig(statement)) {
                         uint32_t address = encoder.getPseudoOrig(statement);
-                        ret.emplace_back(address, statement.line, true);
+                        ret.emplace_back(address, line, true);
                         msg << utils::ssprintf("(orig) 0x%0.4x", address);
                     } else if(encoder.isValidPseudoFill(statement, symbols)) {
                         uint32_t value = encoder.getPseudoFill(statement, symbols);
-                        ret.emplace_back(value, statement.line, false);
+                        ret.emplace_back(value, line, false);
                         msg << utils::ssprintf("0x%0.4x", value);
                     } else if(encoder.isValidPseudoBlock(statement)) {
                         uint32_t size = encoder.getPseudoBlockSize(statement);
+                        // check if size overflows lc3 memory
+                        if (statement.pc + size > 0xFFFF) {
+                            logger.asmPrintf(PrintType::P_ERROR, statement, "block size overflows memory");
+                            logger.newline();
+                            success = false;
+                        }
                         std::random_device rd;
                         std::uniform_int_distribution<> distr(0, 0xFFFF); 
                         // .blkw should technically skip memory locations, but we'll fill with random data to mock that
                         for(uint32_t i = 0; i < size; i += 1) {
-                            ret.emplace_back(distr(rd), statement.line, false);
+                            ret.emplace_back(distr(rd), line, false);
                         }
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] skipped for .blkw", statement.pc, statement.pc + size - 1);
                     } else if(encoder.isValidPseudoString(statement)) {
@@ -523,7 +542,7 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                         for(char c : value) {
                             ret.emplace_back(c, std::string(1, c), false);
                         }
-                        ret.emplace_back(0, statement.line, false);
+                        ret.emplace_back(0, line, false);
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = \'%s\\0\'", statement.pc,
                             statement.pc + value.size(), value.c_str());
                     } else if(encoder.isValidPseudoEnd(statement)) {
@@ -549,7 +568,7 @@ std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::build
                 if(candidate) {
                     optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
                     if(value) {
-                        ret.emplace_back(*value, statement.line, false);
+                        ret.emplace_back(*value, line, false);
                         msg << utils::ssprintf("0x%0.4x", *value);
                         valid = true;
                         logger.printf(PrintType::P_EXTRA, true, "  0x%0.4x", *value);

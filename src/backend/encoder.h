@@ -26,6 +26,7 @@ namespace asmbl
         bool isStringInstructionName(std::string const & name) const;
         bool isPseudo(Statement const & statement) const;
         bool isInst(Statement const & statement) const;
+        bool isValidAlphaNumLabel(Statement const & statement) const;
         bool isValidPseudoOrig(Statement const & statement, bool log_enable = false) const;
         bool isValidPseudoFill(Statement const & statement, bool log_enable = false) const;
         bool isValidPseudoFill(Statement const & statement, SymbolTable const & symbols,

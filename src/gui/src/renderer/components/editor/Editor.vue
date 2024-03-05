@@ -160,7 +160,7 @@ export default {
         );
         this.editor.original_content = this.editor.current_content;
       }
-      this.build()
+      this.build();
     },
     autosaveFile() {
       if (
@@ -223,34 +223,36 @@ export default {
         }
       }
 
-			const temp_console_string = lc3.GetAndClearOutput();
-			this.console_str = "";
-			setTimeout(() => {
-				this.console_str = temp_console_string;
-			}, 200);
-			if (success) {
-				this.$store.commit("touchActiveFileBuildTime");
-			}
-		},
-		editorInit(editor) {
-			require("./lc3");
-			require("brace/mode/html");
-			require("brace/mode/javascript");
-			require("brace/mode/less");
-			require("brace/theme/textmate");
-			require("brace/theme/twilight");
-			require("brace/ext/searchbox");
-			require("brace/keybinding/vim");
-			require("brace/ext/language_tools"); // for more config: const langTools = ace.acequire("ace/ext/language_tools");
-			editor.setShowPrintMargin(false);
-			editor.setOptions({
-				fontSize: "1.25em",
-				scrollPastEnd: 0.7,
-			});
-			editor.setOptions({
-				enableBasicAutocompletion: [CreateLc3CompletionProvider(() => this.autocompleteMode)],
-				enableLiveAutocompletion: true
-			});
+      const temp_console_string = lc3.GetAndClearOutput();
+      this.console_str = "";
+      setTimeout(() => {
+        this.console_str = temp_console_string;
+      }, 200);
+      if (success) {
+        this.$store.commit("touchActiveFileBuildTime");
+      }
+    },
+    editorInit(editor) {
+      require("./lc3");
+      require("brace/mode/html");
+      require("brace/mode/javascript");
+      require("brace/mode/less");
+      require("brace/theme/textmate");
+      require("brace/theme/twilight");
+      require("brace/ext/searchbox");
+      require("brace/keybinding/vim");
+      require("brace/ext/language_tools"); // for more config: const langTools = ace.acequire("ace/ext/language_tools");
+      editor.setShowPrintMargin(false);
+      editor.setOptions({
+        fontSize: "1.25em",
+        scrollPastEnd: 0.7
+      });
+      editor.setOptions({
+        enableBasicAutocompletion: [
+          CreateLc3CompletionProvider(() => this.autocompleteMode)
+        ],
+        enableLiveAutocompletion: true
+      });
       editor.commands.addCommand({
         name: "save",
         bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
@@ -318,20 +320,19 @@ export default {
 };
 </script>
 
-
 <style>
 .ace_editor.ace_autocomplete.ace_twilight {
-	background-color: red;
+  background-color: red;
 }
 
 .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line {
-	background-color: blue;
+  background-color: blue;
 }
 .ace_twilight {
-	 background-color: red !important;
+  background-color: red !important;
 }
 .ace_twilight .ace_completion-highlight {
-	color: orange !important;
+  color: orange !important;
 }
 </style>
 
