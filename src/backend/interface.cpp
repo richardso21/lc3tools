@@ -34,6 +34,7 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     cur_inst_exec_limit = 0;
     target_inst_exec = 0;
     cur_sub_depth = 0;
+    relative_inst_exec_limit = false;
 }
 
 std::pair<bool, std::string> lc3::sim::loadObjFile(std::string const & filename)
@@ -101,6 +102,8 @@ uint64_t lc3::sim::randomizeState(uint64_t seed)
 
 void lc3::sim::setRunInstLimit(uint64_t inst_limit) { cur_inst_exec_limit = inst_limit; }
 
+void lc3::sim::setRunInstLimitRelativeMode(bool is_relative) { relative_inst_exec_limit = is_relative; }
+
 bool lc3::sim::run(void)
 {
     run_type = RunType::NORMAL;
@@ -128,24 +131,42 @@ void lc3::sim::asyncInterrupt(void)
 bool lc3::sim::stepIn(void)
 {
     run_type = RunType::NORMAL;
+    auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     setRunInstLimit(1);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit); // reset instruction limit to previous value
+    setRunInstLimitRelativeMode(tmp_relative);
+    return res;
 }
 
 bool lc3::sim::stepOver(void)
 {
     run_type = RunType::UNTIL_DEPTH;
+    auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     cur_sub_depth = 0;
     setRunInstLimit(0);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit);
+    setRunInstLimitRelativeMode(tmp_relative);
+    return res;
 }
 
 bool lc3::sim::stepOut(void)
 {
     run_type = RunType::UNTIL_DEPTH;
+    auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     cur_sub_depth = 1;
     setRunInstLimit(0);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit);
+    setRunInstLimitRelativeMode(tmp_relative);
+    return res;
 }
 
 lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
@@ -190,7 +211,7 @@ void lc3::sim::writeCC(char value)
 void lc3::sim::setBreakpoint(uint16_t addr) { simulator.addBreakpoint(addr); }
 void lc3::sim::removeBreakpoint(uint16_t addr) { simulator.removeBreakpoint(addr); }
 
-bool lc3::sim::didExceedInstLimit(void) const { return total_inst_exec == target_inst_exec; }
+bool lc3::sim::didExceedInstLimit(void) const { return total_inst_exec >= target_inst_exec; }
 
 void lc3::sim::registerCallback(lc3::core::CallbackType type, lc3::sim::Callback func) { callbacks[type] = func; }
 
@@ -226,7 +247,7 @@ void lc3::sim::loadOS(void)
 bool lc3::sim::runHelper(void)
 {
     encountered_lc3_exception = false;
-    target_inst_exec = total_inst_exec + cur_inst_exec_limit;
+    target_inst_exec = (relative_inst_exec_limit ? total_inst_exec : 0) + cur_inst_exec_limit;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -267,7 +288,7 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
         // Increment total instruction count
         ++(sim_inst->total_inst_exec);
         if(sim_inst->cur_inst_exec_limit != 0) {
-            if(sim_inst->total_inst_exec == sim_inst->target_inst_exec) {
+            if(sim_inst->didExceedInstLimit()) {
                 // If an instruction limit is set (i.e. cur_inst_exec_limit != 0), halt when target is reached.
                 sim_inst->simulator.triggerSuspend();
             }

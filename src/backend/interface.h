@@ -35,6 +35,7 @@ namespace lc3
         uint64_t randomizeState(uint64_t seed = 0);
 
         void setRunInstLimit(uint64_t inst_limit);
+        void setRunInstLimitRelativeMode(bool is_relative);
         bool run(void);
         bool runUntilHalt(void);
         bool runUntilInputRequested(void);
@@ -144,6 +145,7 @@ namespace lc3
         } run_type;
 
         bool encountered_lc3_exception;
+        bool relative_inst_exec_limit;
         uint64_t total_inst_exec;
         uint64_t cur_inst_exec_limit, target_inst_exec;
         uint64_t cur_sub_depth;
