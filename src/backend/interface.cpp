@@ -34,6 +34,7 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     cur_inst_exec_limit = 0;
     target_inst_exec = 0;
     cur_sub_depth = 0;
+    relative_inst_exec_limit = false;
 }
 
 std::pair<bool, std::string> lc3::sim::loadObjFile(std::string const & filename)
@@ -100,6 +101,8 @@ uint64_t lc3::sim::randomizeState(uint64_t seed)
 }
 
 void lc3::sim::setRunInstLimit(uint64_t inst_limit) { cur_inst_exec_limit = inst_limit; }
+
+void lc3::sim::setRunInstLimitRelativeMode(bool is_relative) { relative_inst_exec_limit = is_relative; }
 
 bool lc3::sim::run(void)
 {
@@ -235,7 +238,7 @@ void lc3::sim::loadOS(void)
 bool lc3::sim::runHelper(void)
 {
     encountered_lc3_exception = false;
-    target_inst_exec = total_inst_exec + cur_inst_exec_limit;
+    target_inst_exec = (relative_inst_exec_limit ? total_inst_exec : 0) + cur_inst_exec_limit;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
