@@ -132,9 +132,12 @@ bool lc3::sim::stepIn(void)
 {
     run_type = RunType::NORMAL;
     auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     setRunInstLimit(1);
     auto res = runHelper();
     setRunInstLimit(tmp_limit); // reset instruction limit to previous value
+    setRunInstLimitRelativeMode(tmp_relative);
     return res;
 }
 
@@ -142,10 +145,13 @@ bool lc3::sim::stepOver(void)
 {
     run_type = RunType::UNTIL_DEPTH;
     auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     cur_sub_depth = 0;
     setRunInstLimit(0);
     auto res = runHelper();
     setRunInstLimit(tmp_limit);
+    setRunInstLimitRelativeMode(tmp_relative);
     return res;
 }
 
@@ -153,10 +159,13 @@ bool lc3::sim::stepOut(void)
 {
     run_type = RunType::UNTIL_DEPTH;
     auto tmp_limit = cur_inst_exec_limit;
+    auto tmp_relative = relative_inst_exec_limit;
+    setRunInstLimitRelativeMode(true);
     cur_sub_depth = 1;
     setRunInstLimit(0);
     auto res = runHelper();
     setRunInstLimit(tmp_limit);
+    setRunInstLimitRelativeMode(tmp_relative);
     return res;
 }
 
