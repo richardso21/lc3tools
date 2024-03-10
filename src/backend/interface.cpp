@@ -128,24 +128,33 @@ void lc3::sim::asyncInterrupt(void)
 bool lc3::sim::stepIn(void)
 {
     run_type = RunType::NORMAL;
+    auto tmp_limit = cur_inst_exec_limit;
     setRunInstLimit(1);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit); // reset instruction limit to previous value
+    return res;
 }
 
 bool lc3::sim::stepOver(void)
 {
     run_type = RunType::UNTIL_DEPTH;
+    auto tmp_limit = cur_inst_exec_limit;
     cur_sub_depth = 0;
     setRunInstLimit(0);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit);
+    return res;
 }
 
 bool lc3::sim::stepOut(void)
 {
     run_type = RunType::UNTIL_DEPTH;
+    auto tmp_limit = cur_inst_exec_limit;
     cur_sub_depth = 1;
     setRunInstLimit(0);
-    return runHelper();
+    auto res = runHelper();
+    setRunInstLimit(tmp_limit);
+    return res;
 }
 
 lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
@@ -190,7 +199,7 @@ void lc3::sim::writeCC(char value)
 void lc3::sim::setBreakpoint(uint16_t addr) { simulator.addBreakpoint(addr); }
 void lc3::sim::removeBreakpoint(uint16_t addr) { simulator.removeBreakpoint(addr); }
 
-bool lc3::sim::didExceedInstLimit(void) const { return total_inst_exec == target_inst_exec; }
+bool lc3::sim::didExceedInstLimit(void) const { return total_inst_exec >= target_inst_exec; }
 
 void lc3::sim::registerCallback(lc3::core::CallbackType type, lc3::sim::Callback func) { callbacks[type] = func; }
 
@@ -267,7 +276,7 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
         // Increment total instruction count
         ++(sim_inst->total_inst_exec);
         if(sim_inst->cur_inst_exec_limit != 0) {
-            if(sim_inst->total_inst_exec == sim_inst->target_inst_exec) {
+            if(sim_inst->didExceedInstLimit()) {
                 // If an instruction limit is set (i.e. cur_inst_exec_limit != 0), halt when target is reached.
                 sim_inst->simulator.triggerSuspend();
             }

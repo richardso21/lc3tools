@@ -121,17 +121,11 @@ public:
     inputter->setCharDelay(inst_count);
   }
 
-  std::string getOutput(void) const;
-  void clearOutput(void) { printer->clear(); }
+  std::string getConsoleOutput(void) const;
+  void clearConsoleOutput(void) { printer->clear(); }
   bool checkMatch(std::string const &a, std::string const &b) const {
     return a == b;
   }
-  bool checkContain(std::string const &str,
-                    std::string const &expected_part) const;
-  double checkSimilarity(std::string const &source,
-                         std::string const &target) const;
-  std::string getPreprocessedString(std::string const &str,
-                                    uint64_t type) const;
 
   lc3::core::SymbolTable const &getSymbolTable(void) const {
     return symbol_table;
@@ -151,7 +145,6 @@ private:
   void setSymbolTable(lc3::core::SymbolTable const &symbol_table) {
     this->symbol_table = symbol_table;
   }
-  // friend int framework2110::main(int argc, char *argv[]);
 };
 
 class Tester_error final {
