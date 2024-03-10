@@ -78,12 +78,6 @@ private:
   friend int main(int argc, char *argv[]);
 
 public:
-  enum PreprocessType {
-    IgnoreCase = 1,
-    IgnoreWhitespace = 2,
-    IgnorePunctuation = 4
-  };
-
   Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
          bool verbose, uint64_t seed,
          std::vector<std::string> const &obj_filenames);
