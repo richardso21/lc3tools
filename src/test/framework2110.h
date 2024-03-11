@@ -44,7 +44,7 @@ struct TestResult {
 };
 
 class Tester {
-private:
+ private:
   std::vector<TestCase> tests;
   bool print_output, ignore_privilege, verbose;
   uint32_t print_level;
@@ -77,7 +77,7 @@ private:
 
   friend int main(int argc, char *argv[]);
 
-public:
+ public:
   Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
          bool verbose, uint64_t seed,
          std::vector<std::string> const &obj_filenames);
@@ -135,7 +135,7 @@ public:
   std::string read_mem_string(std::uint16_t addr);
   std::string read_mem_string(std::uint16_t addr, std::size_t len);
 
-private:
+ private:
   void setSymbolTable(lc3::core::SymbolTable const &symbol_table) {
     this->symbol_table = symbol_table;
   }
@@ -144,7 +144,7 @@ private:
 class Tester_error final {
   std::string lbl, msg;
 
-public:
+ public:
   Tester_error(std::string l, std::string m) : lbl{l}, msg{m} {}
   void report(Tester &tester) const noexcept { tester.error(lbl, msg); }
 };
@@ -152,7 +152,7 @@ public:
 class Quoted {
   const std::string &str;
 
-public:
+ public:
   Quoted(const std::string &s) : str{s} {}
 
   friend inline std::ostream &operator<<(std::ostream &os, Quoted q) {
@@ -174,9 +174,10 @@ public:
 };
 
 // Allows creation of strings from character arrays with embedded \0s.
-template <std::size_t N> inline std::string make_string(const char (&arr)[N]) {
+template <std::size_t N>
+inline std::string make_string(const char (&arr)[N]) {
   return {arr, N - 1};
 }
 
 int main(int argc, char *argv[]);
-}; // namespace framework2110
+};  // namespace framework2110

@@ -1,15 +1,13 @@
 /*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+ * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or
+ * distribution without the prior written consent of McGraw-Hill Education.
  */
 #include "lc3os.h"
 
-namespace lc3
-{
-namespace core
-{
-    std::string getOSSrc(void)
-    {
-        char const * lc3os_src_1 = R"LC3OS1(
+namespace lc3 {
+namespace core {
+std::string getOSSrc(void) {
+  char const* lc3os_src_1 = R"LC3OS1(
     .ORIG x0000
 
 ; the TRAP vector table
@@ -528,7 +526,7 @@ namespace core
     .FILL BAD_INT    ; xFE
     .FILL BAD_INT    ; xFF)LC3OS1";
 
-        char const * lc3os_src_2 = R"LC3OS2(
+  char const* lc3os_src_2 = R"LC3OS2(
 OS_START
     ; set system stack pointer
     LD R6, OS_SP
@@ -716,7 +714,7 @@ BAD_INT
 
     .END
 )LC3OS2";
-        return std::string(lc3os_src_1) + std::string(lc3os_src_2);
-    }
-};
-};
+  return std::string(lc3os_src_1) + std::string(lc3os_src_2);
+}
+};  // namespace core
+};  // namespace lc3

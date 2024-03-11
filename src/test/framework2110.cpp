@@ -2,12 +2,13 @@
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or
  * distribution without the prior written consent of McGraw-Hill Education.
  */
+#include "framework2110.h"
+
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <sstream>
 
 #include "common.h"
-#include "framework2110.h"
 using json = nlohmann::json;
 
 int MAX_FAILURES = 8;
@@ -174,8 +175,11 @@ TestCase::TestCase(std::string const &name, test_func_t test_func,
 Tester::Tester(bool print_output, uint32_t print_level, bool ignore_privilege,
                bool verbose, uint64_t seed,
                std::vector<std::string> const &obj_filenames)
-    : print_output(print_output), ignore_privilege(ignore_privilege),
-      verbose(verbose), print_level(print_level), seed(seed),
+    : print_output(print_output),
+      ignore_privilege(ignore_privilege),
+      verbose(verbose),
+      print_level(print_level),
+      seed(seed),
       obj_filenames(obj_filenames) {}
 
 void Tester::registerTest(std::string const &name, test_func_t test_func,
@@ -307,8 +311,7 @@ void Tester::printResults() {
       bool part_passed = test_result.fail_inds.count(i) == 0;
       std::cout << (part_passed ? "--" : "!!") << part->label << " => ";
       std::cout << (part_passed ? "Pass" : "FAIL") << std::endl;
-      if (!part->message.empty())
-        std::cout << part->message << std::endl;
+      if (!part->message.empty()) std::cout << part->message << std::endl;
     }
   }
 }
@@ -429,4 +432,4 @@ std::string Tester::read_mem_string(std::uint16_t addr, std::size_t len) {
   return str;
 }
 
-}; // namespace framework2110
+};  // namespace framework2110
